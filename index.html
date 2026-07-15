@@ -96,7 +96,7 @@
   svg{width:100%;height:100%;display:block}
   .tip{position:fixed;pointer-events:none;background:#ffffff;border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:11px;color:var(--txt);display:none;z-index:200;box-shadow:var(--shadow-sm);white-space:nowrap;width:max-content;max-width:220px;line-height:1.3}
   .tip b{color:var(--accent)}
-  .tip.slot-spectator{padding:9px;max-width:300px;white-space:normal}
+  .tip.slot-spectator{padding:9px;max-width:min(300px,calc(100vw - 12px));max-height:calc(100svh - 12px);overflow:auto;white-space:normal}
   .tip-slot-head{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:7px}
   .tip-slot-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 7px}
   .tip-slot{display:flex;align-items:center;justify-content:space-between;gap:7px;min-width:92px;border-radius:6px;padding:3px 6px;border:1px solid var(--line2);background:var(--panel2);font-size:10px}
@@ -597,6 +597,18 @@ function stationClick(i){
 function flashGuide(msg){ if(state.activeView!=='main')return; var g=document.getElementById('guide');
   g.style.borderLeftColor='#ffb020'; g.innerHTML='<b style="color:#ffb020">'+msg+'</b>';
   setTimeout(function(){g.style.borderLeftColor='';updateGuide();},1800); }
+var TIP_ANCHOR=null;
+function positionTipInViewport(tip,clientX,clientY){
+  var vv=window.visualViewport;
+  var vx=vv?vv.offsetLeft:0, vy=vv?vv.offsetTop:0, vw=vv?vv.width:window.innerWidth, vh=vv?vv.height:window.innerHeight;
+  var pad=6, tw=tip.offsetWidth, th=tip.offsetHeight;
+  var lx=clientX+14, ty=clientY+14;
+  if(lx+tw>vx+vw-pad) lx=clientX-tw-14;
+  if(ty+th>vy+vh-pad) ty=clientY-th-14;
+  lx=Math.max(vx+pad,Math.min(lx,vx+vw-tw-pad));
+  ty=Math.max(vy+pad,Math.min(ty,vy+vh-th-pad));
+  tip.style.left=Math.round(lx)+'px'; tip.style.top=Math.round(ty)+'px';
+}
 function showTip(evt,i){
   if(state.activeView!=='main')return;
   var tip=document.getElementById('tip'); var occ=occupied[i].size, free=16-occ, full=occ>=16;
@@ -610,16 +622,19 @@ function showTip(evt,i){
   tip.className='tip slot-spectator';
   tip.innerHTML='<div class="tip-slot-head"><b>Station '+i+' slot layout</b><span><span style="color:#12b76a;font-weight:700">'+free+' free</span> / <span style="color:#e0455e;font-weight:700">'+occ+' occupied</span>'+(full?' &middot; <span style="color:#e0455e;font-weight:700">FULL</span>':'')+'</span></div><div class="tip-slot-grid">'+cells+'</div>';
   tip.style.display='block';
-  var tw=tip.offsetWidth, th=tip.offsetHeight;
-  var lx=evt.clientX+14, ty=evt.clientY+14;
-  if(lx+tw>window.innerWidth-6) lx=evt.clientX-tw-14;
-  if(ty+th>window.innerHeight-6) ty=evt.clientY-th-14;
-  tip.style.left=lx+'px'; tip.style.top=ty+'px';
+  TIP_ANCHOR={x:evt.clientX,y:evt.clientY};
+  positionTipInViewport(tip,TIP_ANCHOR.x,TIP_ANCHOR.y);
 }
 function hideTip(force){
   if(TOUCH_SPECTATOR_STATION!==null&&!force) return;
-  var tip=document.getElementById('tip');tip.style.display='none';tip.className='tip';
+  var tip=document.getElementById('tip');tip.style.display='none';tip.className='tip';TIP_ANCHOR=null;
 }
+function repositionVisibleTip(){
+  var tip=document.getElementById('tip');
+  if(tip&&tip.style.display==='block'&&TIP_ANCHOR) positionTipInViewport(tip,TIP_ANCHOR.x,TIP_ANCHOR.y);
+}
+window.addEventListener('resize',function(){requestAnimationFrame(repositionVisibleTip);});
+if(window.visualViewport) window.visualViewport.addEventListener('resize',function(){requestAnimationFrame(repositionVisibleTip);});
 function stationMouseMove(evt,i){
   if(evt.sourceCapabilities&&evt.sourceCapabilities.firesTouchEvents) return;
   TOUCH_SPECTATOR_STATION=null; showTip(evt,i);
