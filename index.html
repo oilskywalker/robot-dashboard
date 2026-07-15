@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>REL LAB - Robot Operation Command Dashboard</title>
 <style>
 
@@ -230,6 +233,7 @@
   <h1>REL LAB &middot; <span>Robot Command Dashboard</span></h1>
   <div class="htools">
     <button class="hbtn" id="themeBtn" onclick="toggleTheme()">🌙 Night mode</button>
+    <button class="hbtn" id="fullscreenBtn" onclick="toggleFullscreen()" aria-pressed="false" title="Enter full screen">&#9974; Full Screen</button>
     <button class="hbtn on" id="nav-main" onclick="showView('main')">&#128225; Live Command Hub</button>
     <button class="hbtn" id="nav-r1" onclick="showView('r1')">&#129302; Robot 1 Control <span class="loc" id="nav-r1-loc">(Prepare)</span></button>
     <button class="hbtn" id="nav-r2" onclick="showView('r2')">&#129302; Robot 2 Control <span class="loc" id="nav-r2-loc">(Prepare)</span></button>
@@ -491,6 +495,40 @@ function setTheme(t){
   if(b) b.innerHTML = (t==='light') ? '\u{1F319} Night mode' : '☀️ Light mode';
   drawPlan();
 }
+function fullscreenElement(){return document.fullscreenElement||document.webkitFullscreenElement||null;}
+function updateFullscreenButton(){
+  var b=document.getElementById('fullscreenBtn'), active=!!fullscreenElement();
+  if(!b)return;
+  b.innerHTML=active?'&#10005; Exit Full Screen':'&#9974; Full Screen';
+  b.title=active?'Exit full screen':'Enter full screen';
+  b.setAttribute('aria-pressed',active?'true':'false');
+  b.classList.toggle('on',active);
+}
+function fullscreenFailed(){
+  var b=document.getElementById('fullscreenBtn');
+  if(!b)return;
+  var appleMobile=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  b.textContent=appleMobile?'Use Share → Add to Home Screen':'Full Screen unavailable';
+  setTimeout(updateFullscreenButton,2800);
+}
+function toggleFullscreen(){
+  var active=fullscreenElement(), result;
+  try{
+    if(active){
+      if(document.exitFullscreen) result=document.exitFullscreen();
+      else if(document.webkitExitFullscreen) result=document.webkitExitFullscreen();
+      else return fullscreenFailed();
+    }else{
+      var root=document.documentElement;
+      if(root.requestFullscreen) result=root.requestFullscreen();
+      else if(root.webkitRequestFullscreen) result=root.webkitRequestFullscreen();
+      else return fullscreenFailed();
+    }
+    if(result&&typeof result.catch==='function') result.catch(fullscreenFailed);
+  }catch(e){fullscreenFailed();}
+}
+document.addEventListener('fullscreenchange',updateFullscreenButton);
+document.addEventListener('webkitfullscreenchange',updateFullscreenButton);
 
 /* ---------- state ---------- */
 var COLLIDE_DIST=52;   // motion-sensor safe distance (svg units)
