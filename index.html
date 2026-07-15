@@ -544,48 +544,38 @@ function polyRemainder(p,fr){var L=polyLen(p),tg=fr*L,acc=0;for(var i=1;i<p.leng
 function setLive(n,txt){ var a=document.getElementById('rs-'+n); if(a)a.textContent=txt; var b=document.getElementById('r'+n+'-stat'); if(b)b.textContent=txt; }
 function startMove(n, fromPt, toPt, color, label, onDone){
   var startedAt=cloudNow();
-  state.mov[n]={pts:segPath(fromPt,toPt), from:fromPt.slice(), to:toPt.slice(), color:color, label:label, onDone:onDone, startedAt:startedAt, dur:state.tDur, waiting:false};
+  state.mov[n]={pts:segPath(fromPt,toPt), from:fromPt.slice(), to:toPt.slice(), color:color, label:label, onDone:onDone, startedAt:startedAt, dur:state.tDur, t:0, waiting:false};
   state.busyR[n]=true;
   if(CLOUD && !applyingRemote) pushShared();
   drawPlan();
-  if(!state._raf){ state._raf=requestAnimationFrame(animStep); }
+  if(!state._raf){ state._last=null; state._raf=requestAnimationFrame(animStep); }
 }
-function moveFr(m){ return Math.max(0,Math.min((cloudNow()-m.startedAt)/m.dur,1)); }
-function safeFr(mY, otherPos, rawFr){        // cap yielder so it keeps COLLIDE_DIST behind (deterministic)
-  var p=rawFr;
-  for(var k=0;k<40;k++){
-    var pos=polyAt(mY.pts,p);
-    if(Math.hypot(pos[0]-otherPos[0],pos[1]-otherPos[1])>=COLLIDE_DIST) return p;
-    p-=0.025; if(p<=0) return 0;
-  }
-  return Math.max(0,p);
-}
-function animStep(){
+function moveFr(m){ return Math.max(0,Math.min((m.t||0)/m.dur,1)); }
+function animStep(ts){
+  if(state._last==null) state._last=ts;
+  var dt=Math.min(ts-state._last, 200); state._last=ts;
   var act=[1,2].filter(function(n){return state.mov[n];});
-  var eff={};
-  act.forEach(function(n){ eff[n]=moveFr(state.mov[n]); state.mov[n].waiting=false; });
-  if(act.length===2){                       // motion sensor: pure-time positions, deterministic on every device
+  act.forEach(function(n){ var m=state.mov[n]; m.waiting=false; m._try=(m.t||0)+dt; });
+  if(act.length===2){                       // motion sensor: robot that is further behind stops until path clears
     var a=state.mov[1], b=state.mov[2];
-    var pa=polyAt(a.pts,eff[1]), pb=polyAt(b.pts,eff[2]);
+    var pa=polyAt(a.pts,Math.min(a._try/a.dur,1)), pb=polyAt(b.pts,Math.min(b._try/b.dur,1));
     if(Math.hypot(pa[0]-pb[0],pa[1]-pb[1])<COLLIDE_DIST){
-      var yield_=(eff[1]>=eff[2])?2:1, lead=(yield_===1)?2:1;
-      var leadPos=polyAt(state.mov[lead].pts, eff[lead]);
-      eff[yield_]=safeFr(state.mov[yield_], leadPos, eff[yield_]);
-      state.mov[yield_].waiting=true;
+      var frA=a._try/a.dur, frB=b._try/b.dur;
+      state.mov[(frA>=frB)?2:1].waiting=true;   // lower progress yields (stops); the leader passes
     }
   }
+  act.forEach(function(n){ var m=state.mov[n]; if(!m.waiting){ m.t=m._try; } });
   act.forEach(function(n){
-    var m=state.mov[n]; var fr=eff[n]; var pt=polyAt(m.pts,fr); var other=(n===1?2:1);
+    var m=state.mov[n]; var fr=Math.min((m.t||0)/m.dur,1); var pt=polyAt(m.pts,fr); var other=(n===1?2:1);
     var g=document.getElementById('rmov'+n); if(g)g.setAttribute('transform','translate('+(pt[0]-m.from[0]).toFixed(2)+','+(pt[1]-m.from[1]).toFixed(2)+')');
     var rl=document.getElementById('runline'+n); if(rl)rl.setAttribute('d',pathD(polyRemainder(m.pts,fr)));
-    var pc=document.getElementById('progText'+n); if(pc)pc.textContent=m.waiting?'wait':(Math.round(fr*100)+'%');
+    var pc=document.getElementById('progText'+n); if(pc)pc.textContent=m.waiting?'stop':(Math.round(fr*100)+'%');
     setLive(n, m.waiting?(m.label+' - waiting (sensor: avoiding R'+other+')'):(m.label+' '+Math.round(fr*100)+'%'));
   });
-  // completion: only the initiator (mov has onDone) commits final state
-  var fin=act.filter(function(n){return moveFr(state.mov[n])>=1;});
+  var fin=act.filter(function(n){return (state.mov[n].t||0)>=state.mov[n].dur;});
   fin.forEach(function(n){ var m=state.mov[n]; if(m.onDone){ state.mov[n]=null; state.busyR[n]=false; m.onDone(); } });
   if([1,2].some(function(n){return state.mov[n];})){ state._raf=requestAnimationFrame(animStep); }
-  else { state._raf=null; drawPlan(); }
+  else { state._last=null; state._raf=null; drawPlan(); }
 }
 /* ---------- slot popup ---------- */
 function fillSlots(){
@@ -884,14 +874,15 @@ function applyShared(v){
     if(rec){ var loc=state.mov[n];
       if(!loc || loc.startedAt!==rec.startedAt){
         var mine=(rec.by===CLIENT_ID);
-        state.mov[n]={pts:segPath(rec.from,rec.to), from:rec.from.slice(), to:rec.to.slice(), color:rec.color, label:rec.label, startedAt:rec.startedAt, dur:rec.dur, waiting:false, onDone:(mine&&loc&&loc.onDone)?loc.onDone:null};
+        var initT=mine?((loc&&loc.t)||0):Math.max(0,Math.min(cloudNow()-rec.startedAt,rec.dur));
+        state.mov[n]={pts:segPath(rec.from,rec.to), from:rec.from.slice(), to:rec.to.slice(), color:rec.color, label:rec.label, startedAt:rec.startedAt, dur:rec.dur, t:initT, waiting:false, onDone:(mine&&loc&&loc.onDone)?loc.onDone:null};
       }
     } else if(state.mov[n]){ state.mov[n]=null; }
   });
   LOGARR=(v.log||[]); renderLog();
   applyingRemote=false;
   updateGuide(); drawPlan(); renderRobotPage(1); renderRobotPage(2);
-  if([1,2].some(function(n){return state.mov[n];}) && !state._raf){ state._raf=requestAnimationFrame(animStep); }
+  if([1,2].some(function(n){return state.mov[n];}) && !state._raf){ state._last=null; state._raf=requestAnimationFrame(animStep); }
 }
 
 /* ---------- boot ---------- */
