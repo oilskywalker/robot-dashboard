@@ -28,6 +28,8 @@
   .hbtn{background:#ffffff;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:var(--shadow-sm);transition:.15s}
   .hbtn:hover{border-color:var(--accent2);transform:translateY(-1px)}
   .hbtn.on{border-color:var(--accent);background:linear-gradient(180deg,#f2f6ff,#e8efff);color:var(--accent)}
+  @keyframes hbtnblink{0%,100%{border-color:var(--amber);box-shadow:0 0 0 0 rgba(226,150,15,.55)}50%{border-color:var(--line);box-shadow:0 0 0 5px rgba(226,150,15,0)}}
+  .hbtn.awaitcmd{animation:hbtnblink 1s ease-in-out infinite}
   .hbtn .badge{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700}
   .hbtn .loc{color:var(--mut);font-weight:500}
 
@@ -441,7 +443,13 @@ function showView(v){
   drawPlan();
 }
 function locLabel(n){var l=state.rloc[n];return l==='prepare'?'Prepare':(l==='storage'?'Storage':('Stn '+state.rstn[n]));}
-function refreshNav(){document.getElementById('nav-r1-loc').textContent='('+locLabel(1)+')';document.getElementById('nav-r2-loc').textContent='('+locLabel(2)+')';}
+function refreshNav(){
+  [1,2].forEach(function(n){
+    var e=document.getElementById('nav-r'+n+'-loc'); if(e)e.textContent='('+locLabel(n)+')';
+    var need=((state.rloc[n]==='station')||(state.rloc[n]==='storage'))&&!state.busyR[n];
+    var b=document.getElementById('nav-r'+n); if(b)b.classList.toggle('awaitcmd',need);
+  });
+}
 
 /* ---------- guide ---------- */
 function setStep(a,b,c){var m={on:'stepitem on',done:'stepitem done',off:'stepitem'};
