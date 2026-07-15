@@ -6,6 +6,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="REL LAB Hub">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.webmanifest">
 <title>REL LAB - Robot Operation Command Dashboard</title>
 <style>
 
@@ -430,6 +433,23 @@
   </div>
 </div>
 
+<!-- MOBILE SAFARI FULLSCREEN HELP -->
+<div class="overlay" id="fullscreenHelpOverlay">
+  <div class="modal">
+    <div class="modal-h"><h3>Full Screen on iPhone / iPad</h3><span class="x" onclick="closeOverlay('fullscreenHelpOverlay')">&times;</span></div>
+    <div class="modal-b" id="fullscreenHelpBody">
+      <div class="confirm-box">
+        <b>Safari is blocking webpage fullscreen.</b><br>
+        1. Tap Safari's <b>Share</b> button.<br>
+        2. Choose <b>Add to Home Screen</b>.<br>
+        3. Tap <b>Add</b>, then open <b>REL LAB Hub</b> from the Home Screen.
+      </div>
+      <div class="warnrow">The Home Screen version opens without Safari's address field or tab bar. Swipe Home or close the app to leave it.</div>
+    </div>
+    <div class="modal-f"><button class="btn btn-blue" onclick="closeOverlay('fullscreenHelpOverlay')">Got it</button></div>
+  </div>
+</div>
+
 <!-- LOG POPUP -->
 <div class="overlay" id="logOverlay">
   <div class="modal big">
@@ -507,8 +527,12 @@ function updateFullscreenButton(){
 function fullscreenFailed(){
   var b=document.getElementById('fullscreenBtn');
   if(!b)return;
-  var appleMobile=/iPad|iPhone|iPod/.test(navigator.userAgent);
-  b.textContent=appleMobile?'Use Share → Add to Home Screen':'Full Screen unavailable';
+  var appleMobile=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  if(appleMobile){
+    document.getElementById('fullscreenHelpOverlay').classList.add('show');
+    return;
+  }
+  b.textContent='Full Screen unavailable';
   setTimeout(updateFullscreenButton,2800);
 }
 function toggleFullscreen(){

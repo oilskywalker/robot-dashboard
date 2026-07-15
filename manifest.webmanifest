@@ -1,0 +1,11 @@
+{
+  "name": "REL LAB Robot Command Dashboard",
+  "short_name": "REL LAB Hub",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "background_color": "#dfe6f2",
+  "theme_color": "#ffffff",
+  "description": "Real-time robot command, monitoring, and device delivery dashboard."
+}
