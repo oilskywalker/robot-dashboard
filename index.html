@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REL LAB - Robot Operation Command Dashboard</title>
+<style>
+
+  :root{
+    --panel:#ffffff; --panel2:#eef3fb; --line:#c3cfe1; --line2:#d8e0ee;
+    --txt:#1d2a46; --mut:#6c7b96; --accent:#3355e6; --accent2:#0e9d8f;
+    --gold:#c39a3f; --green:#12b76a; --amber:#e2960f; --red:#e0455e;
+    --slot:#f2f6fc; --slotSel:#12b76a;
+    --shadow:0 14px 38px rgba(29,42,70,.16),0 3px 10px rgba(29,42,70,.09);
+    --shadow-sm:0 4px 14px rgba(29,42,70,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;color:var(--txt);font-size:14px;
+    background:radial-gradient(1200px 600px at 80% -12%,#dce6f6 0%,rgba(220,230,246,0) 60%),linear-gradient(160deg,#dfe6f2 0%,#cdd7e8 100%);min-height:100vh}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px;
+    background:linear-gradient(180deg,#ffffff,#f7faff);border-bottom:1px solid var(--line);
+    box-shadow:0 3px 18px rgba(29,42,70,.10);flex-wrap:wrap;position:relative}
+  header:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--gold))}
+  header h1{font-size:17px;margin:0;letter-spacing:.3px;font-weight:700;display:flex;align-items:center;gap:10px}
+  header h1:before{content:"";width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 3px 10px rgba(51,85,230,.35)}
+  header h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700}
+  .htools{display:flex;gap:8px;flex-wrap:wrap}
+  .hbtn{background:#ffffff;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:var(--shadow-sm);transition:.15s}
+  .hbtn:hover{border-color:var(--accent2);transform:translateY(-1px)}
+  .hbtn.on{border-color:var(--accent);background:linear-gradient(180deg,#f2f6ff,#e8efff);color:var(--accent)}
+  .hbtn .badge{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700}
+  .hbtn .loc{color:var(--mut);font-weight:500}
+
+  .page{display:none} .page.active{display:block}
+  .wrap{display:grid;grid-template-columns:1fr 360px;gap:16px;padding:16px;height:calc(100vh - 66px)}
+  @media(max-width:1050px){.wrap{grid-template-columns:1fr;height:auto}}
+  .col{display:flex;flex-direction:column;gap:16px;min-height:0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow)}
+  .card h2{margin:0 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:1.4px;color:var(--mut);font-weight:700;display:flex;align-items:center;gap:8px}
+  .card h2:before{content:"";width:14px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+  .steps{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
+  .stepitem{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line2);font-size:12.5px;color:var(--mut);transition:.15s;font-weight:600}
+  .stepitem .n{width:22px;height:22px;border-radius:50%;background:#cfd8e8;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:0 0 auto}
+  .stepitem.on{border-color:var(--accent);background:linear-gradient(180deg,#f1f6ff,#e9f0ff);color:var(--txt);box-shadow:0 4px 14px rgba(51,85,230,.12)}
+  .stepitem.on .n{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+  .stepitem.done .n{background:linear-gradient(135deg,var(--green),#0fa15c)}
+
+  .status-line{font-size:12.5px;color:var(--txt);margin-top:6px;padding:11px 12px;background:linear-gradient(180deg,#f4f9f8,#eef7f5);border-radius:12px;border-left:3px solid var(--accent2);line-height:1.6}
+  .status-line.alert{border-left-color:var(--red);background:linear-gradient(180deg,#fff1f3,#ffe7eb);padding-right:32px;position:relative}
+  .status-line.alert::after{content:"";position:absolute;right:12px;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:var(--red);animation:alertblink .8s ease-in-out infinite}
+  @keyframes alertblink{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(224,69,94,.55)}50%{opacity:.35;box-shadow:0 0 0 7px rgba(224,69,94,0)}}
+  body.theme-night .status-line.alert{background:#2a1418}
+  .sel-summary{font-size:12.5px;background:var(--panel2);border-radius:12px;padding:12px;line-height:2;border:1px solid var(--line2)}
+  .sel-summary b{color:var(--txt)} .sel-summary .k{color:var(--mut);display:inline-block;width:94px}
+  .rstatus{display:flex;gap:9px;margin-top:9px}
+  .rstatus div{flex:1;background:var(--panel2);border:1px solid var(--line2);border-radius:12px;padding:9px 10px;font-size:11px;color:var(--mut)}
+  .rstatus b{display:block;font-size:12px;margin-bottom:3px}
+  .rstatus .r1n{color:#3a76e6} .rstatus .r2n{color:#0e9d8f}
+
+  .btn{width:100%;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;color:#fff;transition:.15s;margin-top:9px;box-shadow:var(--shadow-sm)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+  .btn:hover:not(:disabled){transform:translateY(-1px)}
+  .btn-green{background:linear-gradient(135deg,#16c078,#0f9e5e)}
+  .btn-blue{background:linear-gradient(135deg,#4a72f2,#3355e6)}
+  .btn-amber{background:linear-gradient(135deg,#f5b23c,#e2960f);color:#3a2600}
+  .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--txt);box-shadow:none}
+  .btn-ghost:hover:not(:disabled){border-color:var(--accent2)}
+
+  .plan-card{flex:1;display:flex;flex-direction:column;min-height:520px}
+  .plan-box{flex:1;position:relative;background:linear-gradient(160deg,#dbe4f3,#cfdaee);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:inset 0 2px 12px rgba(29,42,70,.10)}
+  .plan-box>div:not(.tip){width:100%;height:100%}
+  svg{width:100%;height:100%;display:block}
+  .tip{position:fixed;pointer-events:none;background:#ffffff;border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:11px;color:var(--txt);display:none;z-index:200;box-shadow:var(--shadow-sm);white-space:nowrap;width:max-content;max-width:220px;line-height:1.3}
+  .tip b{color:var(--accent)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--mut);margin-top:10px}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .lg-dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .lg-line{width:20px;height:0;border-top:2px dashed;display:inline-block}
+
+  .log{overflow-y:auto;font-family:"SFMono-Regular",Consolas,monospace;font-size:12px;background:#eef3fb;border:1px solid var(--line2);border-radius:10px;padding:12px;line-height:1.7;height:min(58vh,480px)}
+  .log .t{color:#9aa6bd} .log .r1{color:#3a76e6} .log .r2{color:#0e9d8f}
+  .log .ok{color:#0f9e5e} .log .warn{color:#b5730a} .log .mv{color:#0e9d8f}
+
+  @keyframes blkGreen{0%,100%{stroke:#12b76a;stroke-width:4}50%{stroke:#bfe8d5;stroke-width:1.6}}
+  @keyframes blkBlue{0%,100%{stroke:#3355e6;stroke-width:4}50%{stroke:#cdd9f6;stroke-width:1.6}}
+  .blk-prep{animation:blkGreen 1s ease-in-out infinite}
+  .blk-stn{animation:blkBlue 1s ease-in-out infinite}
+  @keyframes freepulse{0%,100%{opacity:1}50%{opacity:.28}}
+  .freeblink{animation:freepulse 1.1s ease-in-out infinite}
+  @keyframes march{to{stroke-dashoffset:-160}}
+  .runline{stroke-dasharray:9 7;stroke-opacity:.85;animation:march 2.6s linear infinite}
+
+  .rpage-wrap{max-width:1040px;margin:18px auto;padding:0 16px;display:flex;flex-direction:column;gap:16px}
+  .bigloc{font-size:15px}
+  .cmds .btn{margin-top:10px}
+  .locpill{display:inline-block;border-radius:20px;padding:4px 13px;font-size:12px;font-weight:700}
+  .lp-prep{background:#e4f7ee;color:#0f9e5e} .lp-stn{background:#e8effe;color:#3355e6} .lp-store{background:#fbf1dc;color:#b5852a}
+
+  .overlay{position:fixed;inset:0;background:rgba(20,32,58,.34);display:none;align-items:center;justify-content:center;z-index:50;backdrop-filter:blur(3px)}
+  .overlay.show{display:flex}
+  .modal{background:#ffffff;border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 60px rgba(29,42,70,.28);width:min(560px,94vw);max-height:90vh;overflow:auto}
+  .modal.big{width:min(700px,96vw)}
+  .modal-h{padding:16px 20px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center}
+  .modal-h h3{margin:0;font-size:16px;font-weight:700}
+  .modal-b{padding:20px}
+  .modal-f{padding:14px 20px;border-top:1px solid var(--line2);display:flex;gap:10px;justify-content:flex-end}
+  .modal-f .btn{width:auto;padding:11px 22px;margin:0}
+  .x{cursor:pointer;color:var(--mut);font-size:22px;line-height:1}
+
+  .slot-wrap{display:flex;gap:36px;justify-content:center;margin:6px 0 4px}
+  .slot-col{display:flex;flex-direction:column;gap:10px;align-items:center}
+  .slot-col h4{margin:0 0 4px;font-size:12px;color:var(--mut);letter-spacing:1px}
+  .slot{width:152px;height:44px;border-radius:11px;background:var(--slot);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;transition:.12s;position:relative;font-weight:600;color:#41506e}
+  .slot:hover{border-color:var(--accent2);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+  .slot.sel{background:linear-gradient(135deg,#16c078,#0f9e5e);color:#fff;border-color:#0f9e5e}
+  .slot.occupied{background:#fdeef1;border-color:#f2c2cc;color:#d0566b;cursor:not-allowed}
+  .slot small{position:absolute;left:11px;font-size:11px;opacity:.7}
+  .confirm-box{background:var(--panel2);border:1px solid var(--line2);border-radius:12px;padding:15px;font-size:14px;line-height:2}
+  .confirm-box .k{color:var(--mut);display:inline-block;width:130px}
+  .confirm-box b{color:var(--accent)}
+  .warnrow{margin-top:10px;font-size:12px;color:var(--amber)}
+  .muted{color:var(--mut);font-size:12px;line-height:1.6}
+
+
+  /* ================= NIGHT THEME ================= */
+  body.theme-night{
+    --panel:#161f2e; --panel2:#1d2837; --line:#2b3849; --line2:#243244;
+    --txt:#e7edf5; --mut:#8ea3bd; --slot:#22304a;
+    --shadow:0 16px 40px rgba(0,0,0,.55),0 3px 12px rgba(0,0,0,.45);
+    --shadow-sm:0 4px 14px rgba(0,0,0,.45);
+    background:radial-gradient(1200px 600px at 80% -12%,#16233f 0%,rgba(14,20,32,0) 60%),linear-gradient(160deg,#0e1420 0%,#0b111b 100%);
+  }
+  body.theme-night header{background:linear-gradient(180deg,#12203b,#0e1420)}
+  body.theme-night .hbtn{background:#1d2837}
+  body.theme-night .hbtn.on{background:#16294a;color:#7fa8ff}
+  body.theme-night .btn-ghost{background:#1d2837;color:var(--txt)}
+  body.theme-night .modal{background:#161f2e}
+  body.theme-night .tip{background:#0f1a2b}
+  body.theme-night .log{background:#0a1018}
+  body.theme-night .log .warn{color:#ffb020} body.theme-night .log .ok{color:#28d17c}
+  body.theme-night .plan-box{background:linear-gradient(160deg,#0c1320,#0a1018)}
+  body.theme-night .status-line{background:#0f2226}
+  body.theme-night .stepitem.on{background:#0f2226}
+  body.theme-night .slot{background:#22304a;color:#cfe0f5}
+  body.theme-night .slot.occupied{background:#3a2630;border-color:#5a3542;color:#ff9aa6}
+  body.theme-night .slot.sel{color:#062012}
+  body.theme-night .lp-prep{background:#123b26;color:#3affa0}
+  body.theme-night .lp-stn{background:#16294a;color:#7fb3ff}
+  body.theme-night .lp-store{background:#2c2410;color:#e0b24a}
+
+  .pill-row{display:flex;flex-wrap:wrap;gap:6px}
+  .pill{background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:5px 11px;font-size:12px;cursor:pointer;color:var(--txt);font-weight:600}
+  .pill:hover{border-color:var(--accent2)}
+  .pill.sel{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent}
+  /* ================= RESPONSIVE (iPad / phone) ================= */
+  @media(max-width:1050px){
+    .wrap{grid-template-columns:1fr;height:auto}
+    .plan-card{min-height:auto!important}
+    .plan-box{flex:none;width:100%;aspect-ratio:1030 / 490}
+    .log{height:min(50vh,380px)}
+  }
+  @media(max-width:640px){
+    header{padding:10px 12px}
+    header h1{font-size:14px;gap:8px}
+    header h1:before{width:18px;height:18px}
+    .hbtn{padding:6px 9px;font-size:11px}
+    .wrap{padding:10px;gap:10px}
+    .card{padding:12px;border-radius:14px}
+    .card h2{font-size:11px;letter-spacing:1px}
+    .slot{width:122px;height:38px;font-size:12px}
+    .slot-wrap{gap:14px}
+    .modal-f{flex-wrap:wrap}
+    .modal-f .btn{flex:1 1 auto}
+    .rpage-wrap{padding:0 10px;margin:12px auto}
+    .sel-summary .k{width:82px}
+    .legend{gap:10px}
+  }
+  @media(max-width:430px){
+    .slot-wrap{gap:9px}
+    .slot{width:106px}
+    .modal-b{padding:14px}
+  }
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head>
+<body>
+<header>
+  <h1>REL LAB &middot; <span>Robot Command Dashboard</span></h1>
+  <div class="htools">
+    <button class="hbtn" id="themeBtn" onclick="toggleTheme()">🌙 Night mode</button>
+    <button class="hbtn on" id="nav-main" onclick="showView('main')">&#128506; Floor Plan (Deliver)</button>
+    <button class="hbtn" id="nav-r1" onclick="showView('r1')">&#129302; Robot 1 Control <span class="loc" id="nav-r1-loc">(Prepare)</span></button>
+    <button class="hbtn" id="nav-r2" onclick="showView('r2')">&#129302; Robot 2 Control <span class="loc" id="nav-r2-loc">(Prepare)</span></button>
+    <button class="hbtn" onclick="openLog()">&#128220; Log <span class="badge" id="logCount">0</span></button>
+  </div>
+</header>
+
+<!-- MAIN PAGE -->
+<div class="page active" id="pageMain">
+<div class="wrap">
+  <div class="col">
+    <div class="card plan-card">
+      <h2>Floor Plan - REL LAB (Space 515 Sqm) &middot; Deliver device: Prepare &rarr; Test</h2>
+      <div class="plan-box">
+        <div id="planBox"></div>
+        <div id="tip" class="tip"></div>
+      </div>
+      <div class="legend">
+        <span><i class="lg-dot" style="background:var(--green)"></i>&#9733; Prepare (select robot)</span>
+        <span><i class="lg-dot" style="background:#5aa0ff"></i>Test station (blinks = free)</span>
+        <span><i class="lg-dot" style="background:var(--red)"></i>Full station</span>
+        <span><i class="lg-dot" style="background:#d9a94a"></i>Storage</span>
+        <span><i class="lg-line" style="border-color:#0e9d8f"></i>Deliver line</span>
+        <span><i class="lg-line" style="border-color:#e2960f"></i>To Storage</span>
+        <span><i class="lg-line" style="border-color:#3355e6"></i>To Prepare</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <h2>Guided Operation</h2>
+      <div class="steps">
+        <div class="stepitem" id="st1"><span class="n">1</span> Prepare + select robot</div>
+        <div class="stepitem" id="st2"><span class="n">2</span> Pick a test station</div>
+        <div class="stepitem" id="st3"><span class="n">3</span> Slot + confirm + deliver</div>
+      </div>
+      <div class="status-line" id="guide"></div>
+      <div class="muted" style="margin-top:8px">This dashboard only delivers Prepare &rarr; Test. To move a robot from a test/storage station, open its <b>Robot Control</b> page.</div>
+    </div>
+
+    <div class="card">
+      <h2>Current Selection</h2>
+      <div class="sel-summary">
+        <span class="k">Robot:</span> <b id="sumRobot">-</b><br>
+        <span class="k">Pickup:</span> <b id="sumPickup">PREP-01</b><br>
+        <span class="k">Destination:</span> <b id="sumDest">-</b><br>
+        <span class="k">Slot:</span> <b id="sumSlot">-</b>
+      </div>
+      <div class="rstatus">
+        <div><b class="r1n">Robot 1</b><span id="rs-1">Idle - at Prepare</span></div>
+        <div><b class="r2n">Robot 2</b><span id="rs-2">Idle - at Prepare</span></div>
+      </div>
+      <button class="btn btn-ghost" onclick="resetJob()">&#8635; Reset / New Job</button>
+    </div>
+  </div>
+</div>
+</div>
+<!-- ROBOT 1 CONTROL -->
+<div class="page" id="pageR1">
+  <div class="rpage-wrap">
+    <button class="hbtn" style="align-self:flex-start" onclick="showView('main')">&larr; Back to Floor Plan</button>
+    <div class="card">
+      <h2><span style="color:#5aa0ff">Robot 1</span> - Control Page</h2>
+      <div class="sel-summary bigloc">
+        <span class="k">Location:</span> <span id="r1-locpill" class="locpill lp-prep">At Prepare</span><br>
+        <span class="k">Status:</span> <b id="r1-stat">Idle - at Prepare</b>
+      </div>
+      <div class="cmds" id="r1-cmds"></div>
+      <div class="muted" id="r1-note" style="margin-top:10px"></div>
+    </div>
+    <div class="card plan-card" style="min-height:420px">
+      <h2>Robot 1 - Live Position <span style="color:#8ea3bd;text-transform:none;font-weight:400">(yellow line = to Storage, blue line = to Prepare)</span></h2>
+      <div class="plan-box"><div id="planBoxR1"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ROBOT 2 CONTROL -->
+<div class="page" id="pageR2">
+  <div class="rpage-wrap">
+    <button class="hbtn" style="align-self:flex-start" onclick="showView('main')">&larr; Back to Floor Plan</button>
+    <div class="card">
+      <h2><span style="color:#00c2a8">Robot 2</span> - Control Page</h2>
+      <div class="sel-summary bigloc">
+        <span class="k">Location:</span> <span id="r2-locpill" class="locpill lp-prep">At Prepare</span><br>
+        <span class="k">Status:</span> <b id="r2-stat">Idle - at Prepare</b>
+      </div>
+      <div class="cmds" id="r2-cmds"></div>
+      <div class="muted" id="r2-note" style="margin-top:10px"></div>
+    </div>
+    <div class="card plan-card" style="min-height:420px">
+      <h2>Robot 2 - Live Position <span style="color:#8ea3bd;text-transform:none;font-weight:400">(yellow line = to Storage, blue line = to Prepare)</span></h2>
+      <div class="plan-box"><div id="planBoxR2"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLOT POPUP -->
+<div class="overlay" id="slotOverlay">
+  <div class="modal big">
+    <div class="modal-h"><h3 id="slotTitle">Select Slot</h3><span class="x" onclick="closeOverlay('slotOverlay')">&times;</span></div>
+    <div class="modal-b">
+      <div id="storeStations" style="display:none;margin-bottom:10px"></div>
+      <div class="muted" id="slotHint" style="margin-bottom:12px">Pick an empty slot to place the device.</div>
+      <div class="slot-wrap">
+        <div class="slot-col"><h4>COLUMN&nbsp;A</h4><div id="colA"></div></div>
+        <div class="slot-col"><h4>COLUMN&nbsp;B</h4><div id="colB"></div></div>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" onclick="closeOverlay('slotOverlay')">Cancel</button>
+      <button class="btn btn-blue" id="btnSlotOk" onclick="slotOk()" disabled>Continue to Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal">
+    <div class="modal-h"><h3 id="cTitle">Confirm Command</h3><span class="x" onclick="closeOverlay('confirmOverlay')">&times;</span></div>
+    <div class="modal-b">
+      <div class="confirm-box" id="cBody"></div>
+      <div class="warnrow">&#9888; This delivers the device to the test station (~10s transport).</div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" onclick="closeOverlay('confirmOverlay')">Cancel</button>
+      <button class="btn btn-green" id="cGo" onclick="runConfirm()">Confirm &amp; Deliver</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER TYPE (when selecting a robot at Prepare) -->
+<div class="overlay" id="orderOverlay">
+  <div class="modal">
+    <div class="modal-h"><h3>Select Order - <span id="orderRobotName">Robot</span></h3><span class="x" onclick="closeOverlay('orderOverlay')">&times;</span></div>
+    <div class="modal-b">
+      <div class="muted">What do you want this robot to do?</div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" onclick="closeOverlay('orderOverlay')">Cancel</button>
+      <button class="btn btn-blue" onclick="orderDeliver()">&#128230; Bring device: Prepare &rarr; Test</button>
+      <button class="btn btn-amber" onclick="orderWithdraw()">&#8617; Withdraw: Test &rarr; Storage</button>
+    </div>
+  </div>
+</div>
+
+<!-- STORAGE HUMAN-LOAD CONFIRM -->
+<div class="overlay" id="storeOverlay">
+  <div class="modal">
+    <div class="modal-h"><h3>Storage - Load Device &amp; Confirm</h3><span class="x" onclick="closeOverlay('storeOverlay')">&times;</span></div>
+    <div class="modal-b">
+      <div class="confirm-box" id="storeBody"></div>
+      <div class="warnrow">&#9888; Human step: place the device on the robot by hand, then confirm.</div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" onclick="closeOverlay('storeOverlay')">Cancel</button>
+      <button class="btn btn-amber" id="storeGo" onclick="storeConfirmBtn()">Confirm - Carry to Storage</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOG POPUP -->
+<div class="overlay" id="logOverlay">
+  <div class="modal big">
+    <div class="modal-h"><h3>Robot Transport Log</h3><span class="x" onclick="closeOverlay('logOverlay')">&times;</span></div>
+    <div class="modal-b"><div class="log" id="log"></div></div>
+    <div class="modal-f"><button class="btn btn-ghost" onclick="closeOverlay('logOverlay')">Close</button></div>
+  </div>
+</div>
+
+<script>
+/* ---------- Firebase (Multi-device database sharing) ---------- */
+var FIREBASE_CONFIG={
+  apiKey:"AIzaSyCcap-MHEOYFwNyW4Wvdt92-CBz0Zaek_o",
+  authDomain:"robot-dashboard-f0647.firebaseapp.com",
+  databaseURL:"https://robot-dashboard-f0647-default-rtdb.firebaseio.com",
+  projectId:"robot-dashboard-f0647",
+  storageBucket:"robot-dashboard-f0647.firebasestorage.app",
+  messagingSenderId:"821718189730",
+  appId:"1:821718189730:web:d098eeb53bfbf4b2a539fb"
+};
+var CLOUD=false, DB=null, DBREF=null, CLIENT_ID='c'+Math.random().toString(36).slice(2,9), SRV_OFFSET=0, applyingRemote=false;
+try{
+  if(window.firebase && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey.indexOf('PASTE')<0){
+    firebase.initializeApp(FIREBASE_CONFIG);
+    DB=firebase.database(); DBREF=DB.ref('shared'); CLOUD=true;
+    DB.ref('.info/serverTimeOffset').on('value',function(s){ SRV_OFFSET=s.val()||0; });
+  }
+}catch(e){ CLOUD=false; }
+var SYNC_READY=false;
+function cloudNow(){ return Date.now()+SRV_OFFSET; }
+
+/* ---------- geometry & colors ---------- */
+var PREP_NAME='PREP-01', N_TEST=7;
+var STN={1:[95,81],2:[215,81],3:[95,164],4:[215,164],5:[95,304],6:[95,394],7:[215,349]};
+var STORAGE_POS=[385,346], PREP_PARK={1:[752,120],2:[752,175]}, STAR=[850,150];
+var COL_DELIVER='#0e9d8f', COL_STORAGE='#e2960f', COL_PREPARE='#3355e6';
+
+var THEME='light';
+var PAL={
+ light:{border:'#d3dcec',corrFill:'#e7effb',corrStroke:'#c6d6ef',corrText:'#8494ae',arrow:'#d9a327',arrowText:'#b8902f',
+  stnHdr:'#3a76e6',stnTitle:'#1d2a46',stnFill:'#ffffff',stnStroke:'#d3ddec',stnSel:'#e4edfd',stnSelStroke:'#3355e6',stnFull:'#fdeef1',stnFullStroke:'#eeb9c3',stnSub:'#6c7b96',stnFullSub:'#d0566b',
+  starFill:'#dcf5ea',starStroke:'#12b76a',prepLabel:'#0e9d8f',prepSub:'#7a9a8c',selText:'#6c7b96',
+  rbActFill:'#e4edfd',rbActStroke:'#3355e6',rbActText:'#1d2a46',rbAvFill:'#ffffff',rbAvStroke:'#d3ddec',rbAvText:'#41506e',rbUnFill:'#eef1f6',rbUnStroke:'#e2e7ef',rbUnText:'#9aa4b4',
+  storeFill:'#fbf3e0',storeStroke:'#e8d5a4',storeText:'#b5852a',storeSub:'#a08a4e',
+  labFill:'#eef3fc',labStroke:'#cfdaee',labText:'#8794ad',
+  prepBoxFill:'#eafaf3',prepBoxStroke:'#c3ead8',prepBoxText:'#0e9d8f',
+  recvFill:'#f2f6fc',recvStroke:'#d3ddec',recvText:'#6c7b96',glyphText:'#ffffff',r1:'#3a76e6',r2:'#0e9d8f'},
+ night:{border:'#2b3849',corrFill:'#12203b',corrStroke:'#25406e',corrText:'#5a6f8c',arrow:'#ffb020',arrowText:'#ffb020',
+  stnHdr:'#5aa0ff',stnTitle:'#cfe0f5',stnFill:'#141f30',stnStroke:'#33475f',stnSel:'#1b3a6b',stnSelStroke:'#2f6bff',stnFull:'#241820',stnFullStroke:'#5a3542',stnSub:'#8ea3bd',stnFullSub:'#ff9aa6',
+  starFill:'#123b26',starStroke:'#28d17c',prepLabel:'#28d17c',prepSub:'#5f7a63',selText:'#8ea3bd',
+  rbActFill:'#173a6b',rbActStroke:'#2f6bff',rbActText:'#cfe0f5',rbAvFill:'#1d2837',rbAvStroke:'#33475f',rbAvText:'#9fb3cc',rbUnFill:'#14181f',rbUnStroke:'#282d36',rbUnText:'#59626f',
+  storeFill:'#241d10',storeStroke:'#5c4a24',storeText:'#e0b24a',storeSub:'#9a8347',
+  labFill:'#141a24',labStroke:'#3a4a63',labText:'#8ea3bd',
+  prepBoxFill:'#0f1a12',prepBoxStroke:'#1e3826',prepBoxText:'#28d17c',
+  recvFill:'#141f30',recvStroke:'#33475f',recvText:'#8ea3bd',glyphText:'#001018',r1:'#5aa0ff',r2:'#00c2a8'}
+};
+function toggleTheme(){ setTheme(THEME==='light'?'night':'light'); }
+function setTheme(t){
+  THEME=t;
+  document.body.classList.toggle('theme-night', t==='night');
+  var b=document.getElementById('themeBtn');
+  if(b) b.innerHTML = (t==='light') ? '\u{1F319} Night mode' : '☀️ Light mode';
+  drawPlan();
+}
+
+/* ---------- state ---------- */
+var COLLIDE_DIST=52;   // motion-sensor safe distance (svg units)
+var state={ robot:null, stage:'robot', dest:null, slot:null, pendingSlot:null, activeView:'main',
+  rloc:{1:'prepare',2:'prepare'}, rstn:{1:null,2:null}, rIdx:{1:null,2:null}, rLbl:{1:null,2:null},
+  rpos:{1:[752,120],2:[752,175]}, busyR:{1:false,2:false},
+  mov:{1:null,2:null}, target:{1:null,2:null}, slotMode:'deliver', slotStn:null, tDur:10000, _raf:null, _last:null };
+var robotStatus={1:'Idle - at Prepare',2:'Idle - at Prepare'};
+var logLines=0;
+var occupied={};
+for(var s=1;s<=N_TEST;s++){occupied[s]=new Set();for(var i=0;i<16;i++){if((s*7+i*3)%5===0)occupied[s].add(i);}}
+occupied[2]=new Set();for(var i=0;i<15;i++)occupied[2].add(i);   // almost full: 1 free (easy to test max)
+occupied[6]=new Set();for(var i=0;i<14;i++)occupied[6].add(i);   // almost full: 2 free
+
+/* ---------- views ---------- */
+function planContainerId(){ return state.activeView==='main'?'planBox':(state.activeView==='r1'?'planBoxR1':'planBoxR2'); }
+function showView(v){
+  state.activeView=v;
+  ['pageMain','pageR1','pageR2'].forEach(function(id){document.getElementById(id).classList.remove('active');});
+  ['nav-main','nav-r1','nav-r2'].forEach(function(id){document.getElementById(id).classList.remove('on');});
+  if(v==='main'){document.getElementById('pageMain').classList.add('active');document.getElementById('nav-main').classList.add('on');}
+  else{var n=v==='r1'?1:2;document.getElementById('page'+v.toUpperCase()).classList.add('active');document.getElementById('nav-'+v).classList.add('on');renderRobotPage(n);}
+  drawPlan();
+}
+function locLabel(n){var l=state.rloc[n];return l==='prepare'?'Prepare':(l==='storage'?'Storage':('Stn '+state.rstn[n]));}
+function refreshNav(){document.getElementById('nav-r1-loc').textContent='('+locLabel(1)+')';document.getElementById('nav-r2-loc').textContent='('+locLabel(2)+')';}
+
+/* ---------- guide ---------- */
+function setStep(a,b,c){var m={on:'stepitem on',done:'stepitem done',off:'stepitem'};
+  document.getElementById('st1').className=m[a];document.getElementById('st2').className=m[b];document.getElementById('st3').className=m[c];}
+function availRobots(){var a=[];if(state.rloc[1]==='prepare'&&!state.busyR[1])a.push(1);if(state.rloc[2]==='prepare'&&!state.busyR[2])a.push(2);return a;}
+function updateGuide(){
+  var g=document.getElementById('guide');
+  g.classList.remove('alert');
+  if(state.stage==='robot'){ setStep('on','off','off');
+    var av=availRobots();
+    if(av.length===0){
+      g.classList.add('alert');
+      if(state.busyR[1]||state.busyR[2]){ g.innerHTML='<b>Step 1.</b> Robot(s) moving. Wait for one to reach Prepare, or use a Control page.'; }
+      else { g.innerHTML='<b>Step 1.</b> No robot at Prepare. Open a <b>Robot Control</b> page to return one.'; }
+    }
+    else{ g.innerHTML='<b>Step 1.</b> Prepare box is blinking. Select an available robot ('+av.map(function(x){return 'Robot '+x;}).join(' or ')+'). Both robots can run at the same time.'; }
+  }else if(state.stage==='station'){ setStep('done','on','off');
+    g.innerHTML='<b>Step 2.</b> Robot '+state.robot+' ready. Available stations blink blue. Hover for status, click to pick a slot.'; }
+  else if(state.stage==='slot'){ setStep('done','done','on');
+    g.innerHTML='<b>Step 3.</b> Choose a free slot in Station '+state.dest+', then confirm to deliver.'; }
+  else if(state.stage==='transport'){ setStep('done','done','on');
+    g.innerHTML='Robot '+state.robot+' <b>delivering</b>... 0%'; }
+}
+
+/* ---------- robot select / station / tooltip ---------- */
+function pickRobot(n){
+  if(state.busyR[n]) return;
+  if(state.rloc[n]!=='prepare'){ flashGuide('Robot '+n+' is away ('+locLabel(n)+'). Use its Control page to return it.'); return; }
+  state.orderRobot=n;
+  document.getElementById('orderRobotName').textContent='Robot '+n;
+  document.getElementById('orderOverlay').classList.add('show');
+}
+function orderDeliver(){
+  var n=state.orderRobot; closeOverlay('orderOverlay');
+  state.robot=n; document.getElementById('sumRobot').textContent='Robot '+n; state.stage='station';
+  log('<span class="ok">PREPARE</span> Device prepared at '+PREP_NAME+'. <b class="r'+n+'">Robot '+n+'</b> called. Pick a blinking test station.');
+  updateGuide(); drawPlan();
+}
+function orderWithdraw(){
+  var n=state.orderRobot; closeOverlay('orderOverlay');
+  log('<span class="ok">ORDER</span> <b class="r'+n+'">Robot '+n+'</b>: withdraw device from a test station to Storage.');
+  openStoreSlotPopup(n);
+}
+function setRobotStatus(n,txt){ robotStatus[n]=txt; var e=document.getElementById('rs-'+n); if(e)e.textContent=txt; var e2=document.getElementById('r'+n+'-stat'); if(e2)e2.textContent=txt; refreshNav(); }
+function pickRobotPrompt(){ if(state.stage==='robot' && availRobots().length>0){ flashGuide('Select an available robot inside the Prepare box.'); } }
+function stationClick(i){
+  if(state.stage!=='station'){ if(state.stage==='robot' && state.activeView==='main'){ flashGuide('Select a robot in the Prepare box first (Step 1).'); } return; }
+  if(occupied[i].size>=16){ flashGuide('Station '+i+' is FULL - choose another.'); return; }
+  if(state.target[1]===i || state.target[2]===i){ var who=(state.target[1]===i)?1:2; flashGuide('Station '+i+' is assigned to Robot '+who+'. Only one robot per test station - choose another.'); return; }
+  state.dest=i; document.getElementById('sumDest').textContent='Test Station '+i;
+  state.slot=null; document.getElementById('sumSlot').textContent='-';
+  state.stage='slot'; updateGuide(); drawPlan(); openSlotPopup();
+}
+function flashGuide(msg){ if(state.activeView!=='main')return; var g=document.getElementById('guide');
+  g.style.borderLeftColor='#ffb020'; g.innerHTML='<b style="color:#ffb020">'+msg+'</b>';
+  setTimeout(function(){g.style.borderLeftColor='';updateGuide();},1800); }
+function showTip(evt,i){
+  if(state.activeView!=='main')return;
+  var tip=document.getElementById('tip'); var occ=occupied[i].size, free=16-occ, full=occ>=16;
+  tip.innerHTML='<b>Station '+i+'</b> &middot; <span style="color:#12b76a;font-weight:700">'+free+' free</span> / <span style="color:#e0455e;font-weight:700">'+occ+' occ</span>'+(full?' <span style="color:#e0455e;font-weight:700">FULL</span>':'');
+  tip.style.display='block';
+  var tw=tip.offsetWidth, th=tip.offsetHeight;
+  var lx=evt.clientX+14, ty=evt.clientY+14;
+  if(lx+tw>window.innerWidth-6) lx=evt.clientX-tw-14;
+  if(ty+th>window.innerHeight-6) ty=evt.clientY-th-14;
+  tip.style.left=lx+'px'; tip.style.top=ty+'px';
+}
+function hideTip(){document.getElementById('tip').style.display='none';}
+
+/* ---------- log ---------- */
+function openLog(){document.getElementById('logOverlay').classList.add('show');}
+var LOGARR=[];
+function renderLog(){
+  var el=document.getElementById('log');
+  el.innerHTML=LOGARR.map(function(e){return '<div><span class="t">'+e.t+'</span> '+e.m+'</div>';}).join('');
+  el.scrollTop=el.scrollHeight;
+  document.getElementById('logCount').textContent=LOGARR.length;
+}
+function log(msg){
+  LOGARR.push({t:new Date().toLocaleTimeString('en-GB'), m:msg});
+  if(LOGARR.length>80) LOGARR=LOGARR.slice(-80);
+  renderLog();
+  if(CLOUD && !applyingRemote) pushShared();
+}
+
+/* ---------- running-line transport ---------- */
+function segPath(f,t){ return [ [f[0],f[1]],[f[0],235],[t[0],235],[t[0],t[1]] ]; }
+function pathD(p){ var d='M'+p[0][0]+' '+p[0][1]; for(var i=1;i<p.length;i++){d+=' L'+p[i][0]+' '+p[i][1];} return d; }
+function polyLen(p){ var L=0; for(var i=1;i<p.length;i++){L+=Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1]);} return L; }
+function polyAt(p,fr){ var L=polyLen(p),tg=fr*L,acc=0; for(var i=1;i<p.length;i++){var dx=p[i][0]-p[i-1][0],dy=p[i][1]-p[i-1][1],sg=Math.hypot(dx,dy); if(acc+sg>=tg){var r=sg?(tg-acc)/sg:0; return [p[i-1][0]+dx*r,p[i-1][1]+dy*r];} acc+=sg;} return p[p.length-1]; }
+function polyRemainder(p,fr){var L=polyLen(p),tg=fr*L,acc=0;for(var i=1;i<p.length;i++){var dx=p[i][0]-p[i-1][0],dy=p[i][1]-p[i-1][1],sg=Math.hypot(dx,dy);if(acc+sg>=tg){var r=sg?(tg-acc)/sg:0;return [[p[i-1][0]+dx*r,p[i-1][1]+dy*r]].concat(p.slice(i));}acc+=sg;}return [p[p.length-1]];}
+function setLive(n,txt){ var a=document.getElementById('rs-'+n); if(a)a.textContent=txt; var b=document.getElementById('r'+n+'-stat'); if(b)b.textContent=txt; }
+function startMove(n, fromPt, toPt, color, label, onDone){
+  var startedAt=cloudNow();
+  state.mov[n]={pts:segPath(fromPt,toPt), from:fromPt.slice(), to:toPt.slice(), color:color, label:label, onDone:onDone, startedAt:startedAt, dur:state.tDur, waiting:false};
+  state.busyR[n]=true;
+  if(CLOUD && !applyingRemote) pushShared();
+  drawPlan();
+  if(!state._raf){ state._raf=requestAnimationFrame(animStep); }
+}
+function moveFr(m){ return Math.max(0,Math.min((cloudNow()-m.startedAt)/m.dur,1)); }
+function safeFr(mY, otherPos, rawFr){        // cap yielder so it keeps COLLIDE_DIST behind (deterministic)
+  var p=rawFr;
+  for(var k=0;k<40;k++){
+    var pos=polyAt(mY.pts,p);
+    if(Math.hypot(pos[0]-otherPos[0],pos[1]-otherPos[1])>=COLLIDE_DIST) return p;
+    p-=0.025; if(p<=0) return 0;
+  }
+  return Math.max(0,p);
+}
+function animStep(){
+  var act=[1,2].filter(function(n){return state.mov[n];});
+  var eff={};
+  act.forEach(function(n){ eff[n]=moveFr(state.mov[n]); state.mov[n].waiting=false; });
+  if(act.length===2){                       // motion sensor: pure-time positions, deterministic on every device
+    var a=state.mov[1], b=state.mov[2];
+    var pa=polyAt(a.pts,eff[1]), pb=polyAt(b.pts,eff[2]);
+    if(Math.hypot(pa[0]-pb[0],pa[1]-pb[1])<COLLIDE_DIST){
+      var yield_=(eff[1]>=eff[2])?2:1, lead=(yield_===1)?2:1;
+      var leadPos=polyAt(state.mov[lead].pts, eff[lead]);
+      eff[yield_]=safeFr(state.mov[yield_], leadPos, eff[yield_]);
+      state.mov[yield_].waiting=true;
+    }
+  }
+  act.forEach(function(n){
+    var m=state.mov[n]; var fr=eff[n]; var pt=polyAt(m.pts,fr); var other=(n===1?2:1);
+    var g=document.getElementById('rmov'+n); if(g)g.setAttribute('transform','translate('+(pt[0]-m.from[0]).toFixed(2)+','+(pt[1]-m.from[1]).toFixed(2)+')');
+    var rl=document.getElementById('runline'+n); if(rl)rl.setAttribute('d',pathD(polyRemainder(m.pts,fr)));
+    var pc=document.getElementById('progText'+n); if(pc)pc.textContent=m.waiting?'wait':(Math.round(fr*100)+'%');
+    setLive(n, m.waiting?(m.label+' - waiting (sensor: avoiding R'+other+')'):(m.label+' '+Math.round(fr*100)+'%'));
+  });
+  // completion: only the initiator (mov has onDone) commits final state
+  var fin=act.filter(function(n){return moveFr(state.mov[n])>=1;});
+  fin.forEach(function(n){ var m=state.mov[n]; if(m.onDone){ state.mov[n]=null; state.busyR[n]=false; m.onDone(); } });
+  if([1,2].some(function(n){return state.mov[n];})){ state._raf=requestAnimationFrame(animStep); }
+  else { state._raf=null; drawPlan(); }
+}
+/* ---------- slot popup ---------- */
+function fillSlots(){
+  var colA=document.getElementById('colA'),colB=document.getElementById('colB');colA.innerHTML='';colB.innerHTML='';
+  for(var r=0;r<8;r++){colA.appendChild(makeSlot('A',r,r));}
+  for(var r2=0;r2<8;r2++){colB.appendChild(makeSlot('B',r2,r2+8));}
+  document.getElementById('btnSlotOk').disabled=true;
+}
+function openSlotPopup(){
+  state.slotMode='deliver'; state.slotStn=state.dest; state.pendingSlot=null;
+  document.getElementById('slotTitle').textContent='Test Station '+state.dest+' - Select empty Slot';
+  document.getElementById('btnSlotOk').textContent='Continue to Confirm';
+  document.getElementById('storeStations').style.display='none';
+  document.getElementById('slotHint').textContent='Pick an empty slot (green) to place the device.';
+  fillSlots(); document.getElementById('slotOverlay').classList.add('show');
+}
+function openStoreSlotPopup(n){
+  state.slotMode='store'; state.storeRobot=n; state.pendingSlot=null;
+  state.slotStn=(state.rloc[n]==='station')?state.rstn[n]:null;
+  if(!state.slotStn){ for(var i=1;i<=N_TEST;i++){ if(occupied[i].size>0){ state.slotStn=i; break; } } }
+  if(!state.slotStn){ flashGuide('No device in any test station to withdraw.'); return; }
+  document.getElementById('slotTitle').textContent='Storage pickup - Robot '+n;
+  document.getElementById('btnSlotOk').textContent='Confirm location';
+  document.getElementById('slotHint').textContent='Choose a test station, then the device slot to bring out.';
+  document.getElementById('storeStations').style.display='block';
+  renderStoreStations(); fillSlots();
+  document.getElementById('slotOverlay').classList.add('show');
+}
+function renderStoreStations(){
+  var n=state.storeRobot, other=(n===1?2:1);
+  var box=document.getElementById('storeStations'); var h='<div class="muted" style="margin-bottom:6px">Test station to pick up from:</div><div class="pill-row">';
+  for(var i=1;i<=N_TEST;i++){
+    if(occupied[i].size===0) continue;
+    var cur=(state.rloc[n]==='station' && state.rstn[n]===i);
+    if(state.target[other]===i){ h+='<span class="pill" style="opacity:.4;cursor:not-allowed">Stn '+i+' (R'+other+')</span>'; continue; }
+    var cls='pill'+((state.slotStn===i)?' sel':'');
+    h+='<span class="'+cls+'" onclick="storePickStation('+i+')">Stn '+i+(cur?' (current)':'')+'</span>';
+  }
+  h+='</div>'; box.innerHTML=h;
+}
+function storePickStation(i){ state.slotStn=i; state.pendingSlot=null; document.getElementById('btnSlotOk').disabled=true; renderStoreStations(); fillSlots(); }
+function makeSlot(col,row,idx){
+  var label=col+(row+1);var d=document.createElement('div');var occ=occupied[state.slotStn].has(idx);
+  var selectable=(state.slotMode==='store')?occ:!occ;
+  d.className='slot'+(selectable?'':' occupied');
+  var txt=(state.slotMode==='store')?(occ?'device':'empty'):(occ?'occupied':'empty');
+  d.innerHTML='<small>'+label+'</small>'+txt;
+  if(selectable){d.onclick=function(){var all=document.querySelectorAll('#slotOverlay .slot');for(var j=0;j<all.length;j++){all[j].classList.remove('sel');}
+    d.classList.add('sel');state.pendingSlot={idx:idx,label:label};document.getElementById('btnSlotOk').disabled=false;};}
+  return d;
+}
+function slotOk(){ if(state.slotMode==='store'){ confirmStoreSlot(); } else { confirmSlot(); } }
+function confirmSlot(){
+  state.slot=state.pendingSlot;
+  document.getElementById('sumSlot').textContent='Station '+state.dest+' - Slot '+state.slot.label;
+  closeOverlay('slotOverlay'); log('Slot <b>'+state.slot.label+'</b> chosen in Station '+state.dest+'.'); askConfirm();
+}
+function confirmStoreSlot(){
+  var sl=state.pendingSlot;
+  state.storeStn=state.slotStn; state.storeIdx=sl.idx; state.storeLbl=sl.label;
+  closeOverlay('slotOverlay');
+  log('Pickup location set: Station '+state.storeStn+' slot '+sl.label+'.');
+  moveToPickup();
+}
+function moveToPickup(){
+  var n=state.storeRobot, st=state.storeStn;
+  if(state.rloc[n]==='station' && state.rstn[n]===st){ state.storePhase='position'; positionConfirm(); return; }   // current station: confirm slot position first
+  state.target[n]=st;    // reserve pickup station
+  log('<span class="ok">COMMAND</span> <b class="r'+n+'">Robot '+n+'</b> move to pickup at Station '+st+' slot '+state.storeLbl+'. ~10s.');
+  setRobotStatus(n,'To pickup Stn '+st);
+  startMove(n, state.rpos[n], STN[st], COL_STORAGE, 'To pickup', function(){
+    state.rpos[n]=STN[st].slice(); state.rloc[n]='station'; state.rstn[n]=st;
+    setRobotStatus(n,'At pickup Stn '+st);
+    log('<span class="mv">MOVE</span> <b class="r'+n+'">Robot '+n+'</b> reached pickup Station '+st+'.');
+    state.storePhase='load'; humanLoadConfirm();
+  });
+  renderRobotPage(n);
+}
+function positionConfirm(){
+  var n=state.storeRobot, st=state.storeStn, sl=state.storeLbl;
+  document.getElementById('storeBody').innerHTML=
+     '<div><span class="k">Robot:</span> <b>Robot '+n+'</b></div>'
+    +'<div><span class="k">Station:</span> <b>Station '+st+'</b> (current)</div>'
+    +'<div><span class="k">Target slot:</span> <b>'+sl+'</b></div>'
+    +'<div style="margin-top:8px">Robot '+n+' is at <b>Station '+st+'</b>. Confirm the robot is <b>positioned at the correct slot '+sl+'</b> before loading the device.</div>';
+  document.getElementById('storeGo').textContent='Confirm position';
+  document.getElementById('storeOverlay').classList.add('show');
+}
+function humanLoadConfirm(){
+  var n=state.storeRobot, st=state.storeStn, sl=state.storeLbl;
+  document.getElementById('storeBody').innerHTML=
+     '<div><span class="k">Robot:</span> <b>Robot '+n+'</b></div>'
+    +'<div><span class="k">At station:</span> <b>Station '+st+'</b></div>'
+    +'<div><span class="k">Device slot:</span> <b>'+sl+'</b></div>'
+    +'<div style="margin-top:8px">Robot '+n+' is at <b>Station '+st+'</b>, slot <b>'+sl+'</b> (correct position). Please <b>load the device onto the robot</b> by hand, then confirm - the robot will head to Storage.</div>';
+  document.getElementById('storeGo').textContent='Confirm - Carry to Storage';
+  document.getElementById('storeOverlay').classList.add('show');
+}
+function storeConfirmBtn(){
+  if(state.storePhase==='position'){ state.storePhase='load'; humanLoadConfirm(); }
+  else { doStore(); }
+}
+function doStore(){
+  var n=state.storeRobot, st=state.storeStn, idx=state.storeIdx, lb=state.storeLbl;
+  closeOverlay('storeOverlay');
+  state.target[n]=null;
+  log('<span class="ok">COMMAND</span> <b class="r'+n+'">Robot '+n+'</b> carry device Station '+st+' slot '+lb+' -&gt; Storage (human loaded).');
+  setRobotStatus(n,'To Storage');
+  startMove(n, state.rpos[n], STORAGE_POS, COL_STORAGE, 'To Storage', function(){
+    occupied[st].delete(idx);
+    state.rpos[n]=STORAGE_POS.slice(); state.rloc[n]='storage'; state.rstn[n]=null; state.rIdx[n]=null; state.rLbl[n]=null;
+    setRobotStatus(n,'Idle - at Storage');
+    log('<span class="warn">STORED</span> Robot '+n+' placed device (from Station '+st+' slot '+lb+') in Storage. Slot freed.');
+    renderRobotPage(n); drawPlan(); updateGuide();
+  });
+  renderRobotPage(n);
+}
+function askConfirm(){
+  document.getElementById('cTitle').textContent='Confirm - Deliver Device to Test Station';
+  document.getElementById('cBody').innerHTML=
+     '<div><span class="k">Command:</span> <b>DELIVER TO TEST</b></div>'
+    +'<div><span class="k">Robot:</span> <b>Robot '+state.robot+'</b></div>'
+    +'<div><span class="k">From:</span> <b>'+PREP_NAME+'</b></div>'
+    +'<div><span class="k">To:</span> <b>Test Station '+state.dest+'</b></div>'
+    +'<div><span class="k">Slot:</span> <b>'+state.slot.label+'</b></div>';
+  document.getElementById('confirmOverlay').classList.add('show');
+}
+function runConfirm(){
+  var r=state.robot, dn=state.dest, sl=state.slot;
+  closeOverlay('confirmOverlay');
+  state.target[r]=dn;   // reserve this test station for robot r (no other robot may go there)
+  setRobotStatus(r,'Delivering to Stn '+dn);
+  log('<span class="ok">DELIVER</span> <b class="r'+r+'">Robot '+r+'</b> '+PREP_NAME+' -&gt; Station '+dn+' slot '+sl.label+'. ~10s.');
+  startMove(r, state.rpos[r], STN[dn], COL_DELIVER, 'Delivering', function(){
+    occupied[dn].add(sl.idx);
+    state.rpos[r]=STN[dn].slice(); state.rloc[r]='station'; state.rstn[r]=dn; state.rIdx[r]=sl.idx; state.rLbl[r]=sl.label;
+    setRobotStatus(r,'In use @ Station '+dn+' (slot '+sl.label+')');
+    log('<span class="warn">DELIVERED</span> <b class="r'+r+'">Robot '+r+'</b> stored device in Station '+dn+' slot '+sl.label+'. Command further moves in Robot '+r+' Control page.');
+    updateGuide(); drawPlan();
+  });
+  state.robot=null; state.dest=null; state.slot=null; state.stage='robot';   // free the UI so the other robot can run in parallel
+  document.getElementById('sumRobot').textContent='-'; document.getElementById('sumDest').textContent='-'; document.getElementById('sumSlot').textContent='-';
+  updateGuide(); drawPlan();
+}
+function resetJob(){
+  state.robot=null; state.dest=null; state.slot=null; state.stage='robot';
+  document.getElementById('sumRobot').textContent='-'; document.getElementById('sumDest').textContent='-'; document.getElementById('sumSlot').textContent='-';
+  log('Selection reset. Pick an available robot to start.'); updateGuide(); drawPlan();
+}
+function closeOverlay(id){
+  document.getElementById(id).classList.remove('show');
+  if(id==='slotOverlay' && state.stage==='slot'){ state.stage='station'; updateGuide(); drawPlan(); }
+}
+
+/* ---------- robot control pages ---------- */
+function renderRobotPage(n){
+  var loc=state.rloc[n]; var pill=document.getElementById('r'+n+'-locpill');
+  pill.className='locpill '+(loc==='prepare'?'lp-prep':(loc==='storage'?'lp-store':'lp-stn'));
+  pill.textContent=(loc==='prepare'?'At Prepare Station':(loc==='storage'?'At Storage':('At Test Station '+state.rstn[n])));
+  document.getElementById('r'+n+'-stat').textContent=robotStatus[n];
+  var cmds=document.getElementById('r'+n+'-cmds'), note=document.getElementById('r'+n+'-note');
+  cmds.innerHTML=''; note.innerHTML='';
+  if(state.busyR[n]){ note.innerHTML='Robot '+n+' is moving... watch the running line on the map.'; return; }
+  if(loc==='prepare'){ note.innerHTML='Robot '+n+' is at Prepare and <b>available</b> on the main Floor Plan dashboard. No transport command needed here.'; }
+  else if(loc==='station'){
+    cmds.innerHTML='<button class="btn btn-amber" onclick="robotCmd('+n+',\'storage\')">&#128230; Move device to Storage (pick slot)</button>'
+      +'<button class="btn btn-blue" onclick="robotCmd('+n+',\'prepare\')">&#8617; Return robot to Prepare (blue line)</button>';
+    note.innerHTML='Device is in <b>Station '+state.rstn[n]+'</b>, slot <b>'+state.rLbl[n]+'</b>. Storage frees the slot; Return leaves the device for testing.';
+  }else if(loc==='storage'){
+    cmds.innerHTML='<button class="btn btn-blue" onclick="robotCmd('+n+',\'prepare\')">&#8617; Return robot to Prepare (blue line)</button>';
+    note.innerHTML='Robot '+n+' is at the Storage station.';
+  }
+}
+function robotCmd(n,target){
+  if(state.busyR[n]) return;
+  if(target==='storage'){ openStoreSlotPopup(n); return; }   // pick device slot, then human-load confirm
+  var from=state.rloc[n], dn=state.rstn[n], lb=state.rLbl[n];
+  state.target[n]=null;   // robot leaving this test station -> free it for others
+  var msg=(from==='station')?('Return to Prepare (blue line). Device left in Station '+dn+' slot '+lb+' for testing.'):'Return to Prepare from Storage (blue line).';
+  log('<span class="ok">COMMAND</span> <b class="r'+n+'">Robot '+n+'</b> '+msg);
+  setRobotStatus(n,'To Prepare');
+  startMove(n, state.rpos[n], PREP_PARK[n], COL_PREPARE, 'To Prepare', function(){
+    state.rpos[n]=PREP_PARK[n].slice(); state.rloc[n]='prepare'; state.rstn[n]=null; state.rIdx[n]=null; state.rLbl[n]=null;
+    setRobotStatus(n,'Idle - at Prepare');
+    log('<span class="warn">RETURNED</span> Robot '+n+' back at Prepare (available on main dashboard).');
+    renderRobotPage(n); drawPlan(); updateGuide();
+  });
+  renderRobotPage(n);
+}
+
+/* ---------- floor plan (renders into active view) ---------- */
+function drawPlan(){
+  var P=(THEME==='night')?PAL.night:PAL.light;
+  var sx=STAR[0],sy=STAR[1];
+  function tstn(i,x,y,w,h){
+    var full=occupied[i].size>=16, sel=state.dest===i;
+    var resBy=(state.target[1]===i)?1:((state.target[2]===i)?2:0);
+    var cls=(state.activeView==='main' && state.stage==='station' && !full && !sel && !resBy)?' class="blk-stn"':'';
+    var fill=sel?P.stnSel:(full?P.stnFull:P.stnFill);
+    var stroke=sel?P.stnSelStroke:(resBy?(resBy===1?P.r1:P.r2):(full?P.stnFullStroke:P.stnStroke));
+    var subTxt, subFill, subCls='';
+    if(resBy){ subTxt='Robot '+resBy+' here'; subFill=(resBy===1?P.r1:P.r2); }
+    else if(full){ subTxt='FULL'; subFill=P.stnFullSub; }
+    else { subTxt=(16-occupied[i].size)+' free'; subFill='#0f9e5e'; subCls=' class="freeblink"'; }
+    return '<g style="cursor:pointer" onclick="stationClick('+i+')" onmousemove="showTip(evt,'+i+')" onmouseout="hideTip()">'
+      +'<rect'+cls+' x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="7" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(sel?3:(resBy?2.2:1.4))+'"/>'
+      +'<text x="'+(x+w/2)+'" y="'+(y+h/2-4)+'" fill="'+P.stnTitle+'" font-size="13" font-weight="700" text-anchor="middle">Station '+i+'</text>'
+      +'<text'+subCls+' x="'+(x+w/2)+'" y="'+(y+h/2+13)+'" fill="'+subFill+'" font-size="10" font-weight="'+(subCls?'700':'400')+'" text-anchor="middle">'+subTxt+'</text></g>';
+  }
+  var tops=tstn(1,40,45,110,72)+tstn(2,160,45,110,72)+tstn(3,40,128,110,72)+tstn(4,160,128,110,72);
+  var bots=tstn(5,40,262,110,84)+tstn(6,40,352,110,84)+tstn(7,160,307,110,84);
+
+  var prepBlink=(state.activeView==='main' && state.stage==='robot' && availRobots().length>0)?' class="blk-prep"':'';
+  var star='<g style="cursor:pointer" onclick="pickRobotPrompt()">'
+    +'<circle'+prepBlink+' cx="'+sx+'" cy="'+sy+'" r="16" fill="'+P.starFill+'" stroke="'+P.starStroke+'" stroke-width="2.5"/>'
+    +'<path d="'+starPath(sx,sy,10)+'" fill="'+P.starStroke+'"/>'
+    +'<text x="'+sx+'" y="'+(sy+30)+'" fill="'+P.prepLabel+'" font-size="11" font-weight="700" text-anchor="middle">'+PREP_NAME+'</text>'
+    +'<text x="'+sx+'" y="'+(sy+43)+'" fill="'+P.prepSub+'" font-size="9" text-anchor="middle">human loads device</text></g>';
+  function robotBtn(n,y){
+    var active=state.robot===n, avail=(state.rloc[n]==='prepare' && !state.busyR[n]);
+    var blink=(state.activeView==='main' && state.stage==='robot' && avail && !active)?' class="blk-stn"':'';
+    var label=avail?('Robot '+n+(active?' (selected)':'')):('Robot '+n+' - '+locLabel(n));
+    var fill=active?P.rbActFill:(avail?P.rbAvFill:P.rbUnFill);var stroke=active?P.rbActStroke:(avail?P.rbAvStroke:P.rbUnStroke);
+    var txt=active?P.rbActText:(avail?P.rbAvText:P.rbUnText);
+    var click=avail?('pickRobot('+n+')'):("flashGuide('Robot "+n+" is away - use its Control page.')");
+    return '<g style="cursor:pointer" onclick="'+click+'"><rect'+blink+' x="790" y="'+y+'" width="120" height="34" rx="9" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(active?2.5:1.2)+'"/>'
+      +'<text x="850" y="'+(y+22)+'" fill="'+txt+'" font-size="11.5" font-weight="700" text-anchor="middle">'+label+'</text></g>';
+  }
+  var selBtns='<text x="850" y="243" fill="'+P.selText+'" font-size="10" font-weight="700" text-anchor="middle">SELECT ROBOT (at Prepare only)</text>'+robotBtn(1,250)+robotBtn(2,292);
+
+  var runline='', moving='';
+  [1,2].forEach(function(n){
+    var m=state.mov[n]; if(!m) return;
+    var fr=moveFr(m); var pos=polyAt(m.pts,fr); var f=m.from; var col=(n===1?P.r1:P.r2);
+    runline+='<path id="runline'+n+'" class="runline" d="'+pathD(polyRemainder(m.pts,fr))+'" fill="none" stroke="'+m.color+'" stroke-width="2.6" stroke-linecap="round"/>';
+    var tr='translate('+(pos[0]-f[0]).toFixed(2)+','+(pos[1]-f[1]).toFixed(2)+')';
+    moving+='<g id="rmov'+n+'" transform="'+tr+'"><rect x="'+(f[0]-13)+'" y="'+(f[1]-9)+'" width="26" height="19" rx="5" fill="'+col+'"/>'
+      +'<text x="'+f[0]+'" y="'+(f[1]+4)+'" fill="'+P.glyphText+'" font-size="11" font-weight="700" text-anchor="middle">R'+n+'</text>'
+      +'<text id="progText'+n+'" x="'+f[0]+'" y="'+(f[1]-16)+'" fill="'+m.color+'" font-size="12" font-weight="700" text-anchor="middle">'+Math.round(fr*100)+'%</text></g>';
+  });
+  function robot(n,color){
+    if(state.mov[n]) return '';
+    var p=state.rpos[n],x=p[0],y=p[1];
+    return '<g><rect x="'+(x-13)+'" y="'+(y-9)+'" width="26" height="19" rx="5" fill="'+color+'"/>'
+      +'<text x="'+x+'" y="'+(y+4)+'" fill="'+P.glyphText+'" font-size="11" font-weight="700" text-anchor="middle">R'+n+'</text></g>';
+  }
+
+  var svg='<svg viewBox="0 0 1030 490" preserveAspectRatio="xMidYMid meet">'
+    +'<rect x="8" y="8" width="1014" height="474" rx="12" fill="none" stroke="'+P.border+'" stroke-width="1.5"/>'
+    +'<rect x="30" y="215" width="880" height="40" rx="6" fill="'+P.corrFill+'" stroke="'+P.corrStroke+'"/>'
+    +'<text x="470" y="240" fill="'+P.corrText+'" font-size="13" font-weight="700" text-anchor="middle">REL LAB corridor - Space 515 Sqm</text>'
+    +'<defs><marker id="arw" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="'+P.arrow+'"/></marker></defs>'
+    +'<line x1="895" y1="235" x2="55" y2="235" stroke="'+P.arrow+'" stroke-width="3" marker-end="url(#arw)" opacity="0.65"/>'
+    +'<text x="720" y="209" fill="'+P.arrowText+'" font-size="10" text-anchor="middle">Cart / Robot moving way (right to left)</text>'
+    +'<text x="155" y="30" fill="'+P.stnHdr+'" font-size="11" font-weight="700" text-anchor="middle">TEST STATIONS (left area)</text>'
+    +tops+bots
+    +'<rect x="300" y="300" width="170" height="92" rx="10" fill="'+P.storeFill+'" stroke="'+P.storeStroke+'"/>'
+    +'<text x="385" y="335" fill="'+P.storeText+'" font-size="13" font-weight="700" text-anchor="middle">STORAGE</text>'
+    +'<text x="385" y="356" fill="'+P.storeSub+'" font-size="10" text-anchor="middle">tested devices</text>'
+    +'<rect x="520" y="95" width="210" height="300" rx="12" fill="'+P.labFill+'" stroke="'+P.labStroke+'"/>'
+    +'<text x="625" y="88" fill="'+P.labText+'" font-size="12" font-weight="700" text-anchor="middle">LAB</text>'
+    +'<text x="625" y="205" fill="'+P.labText+'" font-size="11" text-anchor="middle" opacity="0.85">(information area)</text>'
+    +runline
+    +'<rect'+prepBlink+' x="775" y="95" width="150" height="300" rx="12" fill="'+P.prepBoxFill+'" stroke="'+P.prepBoxStroke+'"/>'
+    +'<text x="850" y="88" fill="'+P.prepBoxText+'" font-size="12" font-weight="700" text-anchor="middle">PREPARE STATION</text>'
+    +star+selBtns
+    +'<rect x="955" y="90" width="60" height="305" rx="10" fill="'+P.recvFill+'" stroke="'+P.recvStroke+'"/>'
+    +'<text x="985" y="242" fill="'+P.recvText+'" font-size="11" text-anchor="middle" transform="rotate(90 985 242)">RECEIVED AREA</text>'
+    +robot(1,P.r1)+robot(2,P.r2)+moving
+    +'</svg>';
+  var act=planContainerId();
+  ['planBox','planBoxR1','planBoxR2'].forEach(function(id){ if(id!==act){ var e=document.getElementById(id); if(e && e.innerHTML!=='') e.innerHTML=''; } });
+  var c=document.getElementById(act); if(c)c.innerHTML=svg;
+  refreshNav();
+}
+function starPath(cx,cy,r){var p='';for(var i=0;i<10;i++){var ang=Math.PI/5*i-Math.PI/2;var rr=i%2?r*0.45:r;
+  p+=(i?'L':'M')+(cx+rr*Math.cos(ang)).toFixed(1)+','+(cy+rr*Math.sin(ang)).toFixed(1)+' ';}return p+'Z';}
+
+/* ---------- cloud sync ---------- */
+function pushShared(){
+  if(!CLOUD || !SYNC_READY) return;
+  var occ={}; for(var i=1;i<=N_TEST;i++){ occ[i]=Array.from(occupied[i]); }
+  var rob={}; [1,2].forEach(function(n){ rob[n]={loc:state.rloc[n],stn:(state.rstn[n]==null?null:state.rstn[n]),idx:(state.rIdx[n]==null?null:state.rIdx[n]),lbl:(state.rLbl[n]==null?null:state.rLbl[n]),status:robotStatus[n],px:state.rpos[n][0],py:state.rpos[n][1]}; });
+  var mov={}; [1,2].forEach(function(n){ var m=state.mov[n]; mov[n]= m? {from:m.from,to:m.to,color:m.color,label:m.label,startedAt:m.startedAt,dur:m.dur,by:CLIENT_ID} : null; });
+  DBREF.set({ occ:occ, rob:rob, tgt:{1:(state.target[1]==null?null:state.target[1]),2:(state.target[2]==null?null:state.target[2])}, busy:{1:!!state.busyR[1],2:!!state.busyR[2]}, mov:mov, log:LOGARR, by:CLIENT_ID, ts:cloudNow() });
+}
+function applyShared(v){
+  if(!v) return;
+  applyingRemote=true;
+  for(var i=1;i<=N_TEST;i++){ var arr=(v.occ&&v.occ[i])||[]; occupied[i]=new Set(arr); }
+  if(v.rob){ [1,2].forEach(function(n){ var r=v.rob[n]; if(r){ state.rloc[n]=r.loc; state.rstn[n]=(r.stn==null?null:r.stn); state.rIdx[n]=(r.idx==null?null:r.idx); state.rLbl[n]=(r.lbl==null?null:r.lbl); robotStatus[n]=r.status||''; if(r.px!=null)state.rpos[n]=[r.px,r.py]; var e=document.getElementById('rs-'+n); if(e)e.textContent=robotStatus[n]; var e2=document.getElementById('r'+n+'-stat'); if(e2)e2.textContent=robotStatus[n]; } }); }
+  state.target={1:(v.tgt&&v.tgt[1]!=null?v.tgt[1]:null),2:(v.tgt&&v.tgt[2]!=null?v.tgt[2]:null)};
+  state.busyR={1:!!(v.busy&&v.busy[1]),2:!!(v.busy&&v.busy[2])};
+  [1,2].forEach(function(n){
+    var rec=v.mov&&v.mov[n];
+    if(rec){ var loc=state.mov[n];
+      if(!loc || loc.startedAt!==rec.startedAt){
+        var mine=(rec.by===CLIENT_ID);
+        state.mov[n]={pts:segPath(rec.from,rec.to), from:rec.from.slice(), to:rec.to.slice(), color:rec.color, label:rec.label, startedAt:rec.startedAt, dur:rec.dur, waiting:false, onDone:(mine&&loc&&loc.onDone)?loc.onDone:null};
+      }
+    } else if(state.mov[n]){ state.mov[n]=null; }
+  });
+  LOGARR=(v.log||[]); renderLog();
+  applyingRemote=false;
+  updateGuide(); drawPlan(); renderRobotPage(1); renderRobotPage(2);
+  if([1,2].some(function(n){return state.mov[n];}) && !state._raf){ state._raf=requestAnimationFrame(animStep); }
+}
+
+/* ---------- boot ---------- */
+updateGuide(); drawPlan(); renderRobotPage(1); renderRobotPage(2);
+if(CLOUD){
+  DBREF.on('value', function(snap){
+    var v=snap.val();
+    if(!v){ SYNC_READY=true; pushShared(); log('Cloud sync ON - seeded shared state.'); }
+    else { applyShared(v); if(!SYNC_READY){ SYNC_READY=true; log('Cloud sync ON - joined shared state.'); } }
+  });
+}else{
+  LOGARR.push({t:new Date().toLocaleTimeString('en-GB'), m:'Local mode (no cloud). Deliver Prepare -> Test; Control pages move robots.'}); renderLog();
+}
+</script>
+</body>
+</html>
