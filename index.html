@@ -60,6 +60,27 @@
   .rstatus b{display:block;font-size:12px;margin-bottom:3px}
   .rstatus .r1n{color:#3a76e6} .rstatus .r2n{color:#0e9d8f}
 
+  .auto-grid{display:flex;flex-direction:column;gap:9px}
+  .auto-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"name state" "start reset";gap:8px;align-items:center;background:var(--panel2);border:1px solid var(--line2);border-radius:12px;padding:10px;min-width:0}
+  .auto-name{grid-area:name;font-weight:700;font-size:12px}.auto-name.r1n{color:#3a76e6}.auto-name.r2n{color:#0e9d8f}
+  .auto-state{grid-area:state;font-size:11px;color:var(--mut);line-height:1.35}
+  .auto-btn{grid-area:start;width:100%;min-width:0;box-sizing:border-box;min-height:40px;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:11px;font-weight:800;cursor:pointer;background:#fff;color:var(--txt);transition:.15s}
+  .auto-btn:hover:not(:disabled){transform:translateY(-1px);border-color:var(--accent2)}
+  .auto-btn.on{background:linear-gradient(135deg,#16c078,#0f9e5e);border-color:#0f9e5e;color:#fff}
+  .auto-btn.stopping{background:linear-gradient(135deg,#f5b23c,#e2960f);border-color:#e2960f;color:#3a2600;cursor:wait}
+  .auto-btn:disabled{opacity:.75}
+  .robot-reset-btn{grid-area:reset;width:100%;min-width:0;box-sizing:border-box;min-height:40px;border:1px solid #e7a8b4;border-radius:10px;padding:9px 10px;font-size:11px;font-weight:800;cursor:pointer;background:#fff2f4;color:#c73c55;transition:.15s}
+  .robot-reset-btn:hover:not(:disabled){transform:translateY(-1px);border-color:#e0455e}
+  .robot-reset-btn.running{background:linear-gradient(135deg,#f5b23c,#e2960f);border-color:#e2960f;color:#3a2600;cursor:wait}
+  .robot-reset-btn.check{background:linear-gradient(135deg,#4a72f2,#3355e6);border-color:#3355e6;color:#fff}
+  .robot-reset-btn:disabled{opacity:.75}
+  body.theme-night .auto-btn{background:#1d2837;color:var(--txt)}
+  body.theme-night .auto-btn.on{background:linear-gradient(135deg,#16c078,#0f9e5e);color:#fff}
+  body.theme-night .auto-btn.stopping{background:linear-gradient(135deg,#f5b23c,#e2960f);color:#3a2600}
+  body.theme-night .robot-reset-btn{background:#3a2630;color:#ff9aa6;border-color:#5a3542}
+  body.theme-night .robot-reset-btn.running{background:linear-gradient(135deg,#f5b23c,#e2960f);color:#3a2600}
+  body.theme-night .robot-reset-btn.check{background:linear-gradient(135deg,#4a72f2,#3355e6);color:#fff}
+
   .btn{width:100%;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;color:#fff;transition:.15s;margin-top:9px;box-shadow:var(--shadow-sm)}
   .btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
   .btn:hover:not(:disabled){transform:translateY(-1px)}
@@ -75,6 +96,13 @@
   svg{width:100%;height:100%;display:block}
   .tip{position:fixed;pointer-events:none;background:#ffffff;border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:11px;color:var(--txt);display:none;z-index:200;box-shadow:var(--shadow-sm);white-space:nowrap;width:max-content;max-width:220px;line-height:1.3}
   .tip b{color:var(--accent)}
+  .tip.slot-spectator{padding:9px;max-width:300px;white-space:normal}
+  .tip-slot-head{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:7px}
+  .tip-slot-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 7px}
+  .tip-slot{display:flex;align-items:center;justify-content:space-between;gap:7px;min-width:92px;border-radius:6px;padding:3px 6px;border:1px solid var(--line2);background:var(--panel2);font-size:10px}
+  .tip-slot.free{border-color:#9edbc2;color:#0f9e5e}.tip-slot.used{border-color:#edb6c1;color:#d0566b;background:#fdeef1}
+  .tip-slot i{width:7px;height:7px;border-radius:50%;background:#12b76a}.tip-slot.used i{background:#e0455e}
+  body.theme-night .tip-slot.used{background:#3a2630;color:#ff9aa6;border-color:#5a3542}
   .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--mut);margin-top:10px}
   .legend span{display:inline-flex;align-items:center;gap:5px}
   .lg-dot{width:11px;height:11px;border-radius:3px;display:inline-block}
@@ -177,11 +205,21 @@
     .rpage-wrap{padding:0 10px;margin:12px auto}
     .sel-summary .k{width:82px}
     .legend{gap:10px}
+    .auto-row{grid-template-columns:68px 1fr;grid-template-areas:"name state" "start start" "reset reset"}
+    .auto-btn,.robot-reset-btn{width:100%;min-height:46px;font-size:12px}
   }
   @media(max-width:430px){
     .slot-wrap{gap:9px}
     .slot{width:106px}
     .modal-b{padding:14px}
+    .auto-row{grid-template-columns:62px 1fr}
+  }
+  @media(pointer:coarse){.auto-btn,.robot-reset-btn{min-height:46px}}
+  @media(orientation:landscape) and (pointer:coarse) and (max-width:1400px){
+    .wrap{grid-template-columns:1fr;height:auto;min-height:calc(100svh - 66px);overflow:visible}
+    .wrap>.col:first-child .plan-card{min-height:calc(100svh - 98px)!important}
+    .wrap>.col:first-child .plan-box{min-height:clamp(330px,calc(100svh - 175px),720px)}
+    .wrap>.col:last-child{padding-bottom:24px}
   }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -211,7 +249,7 @@
       </div>
       <div class="legend">
         <span><i class="lg-dot" style="background:var(--green)"></i>&#9733; Prepare (select robot)</span>
-        <span><i class="lg-dot" style="background:#5aa0ff"></i>Test station (blinks = free)</span>
+        <span><i class="lg-dot" style="background:#5aa0ff"></i>Test station (hover / hold for slots)</span>
         <span><i class="lg-dot" style="background:var(--red)"></i>Full station</span>
         <span><i class="lg-dot" style="background:#d9a94a"></i>Storage</span>
         <span><i class="lg-line" style="border-color:#0e9d8f"></i>Deliver line</span>
@@ -231,6 +269,25 @@
       </div>
       <div class="status-line" id="guide"></div>
       <div class="muted" style="margin-top:8px">This dashboard only delivers Prepare &rarr; Test. To move a robot from a test/storage station, open its <b>Robot Control</b> page.</div>
+    </div>
+
+    <div class="card">
+      <h2>Automatic Cycle</h2>
+      <div class="auto-grid">
+        <div class="auto-row">
+          <span class="auto-name r1n">Robot 1</span>
+          <span class="auto-state" id="autoState1" aria-live="polite">Off - manual control</span>
+          <button class="auto-btn" id="autoBtn1" onclick="toggleAutoMode(1)">Start Auto</button>
+          <button class="robot-reset-btn" id="robotResetBtn1" onclick="startRobotReset(1)">Reset Robot</button>
+        </div>
+        <div class="auto-row">
+          <span class="auto-name r2n">Robot 2</span>
+          <span class="auto-state" id="autoState2" aria-live="polite">Off - manual control</span>
+          <button class="auto-btn" id="autoBtn2" onclick="toggleAutoMode(2)">Start Auto</button>
+          <button class="robot-reset-btn" id="robotResetBtn2" onclick="startRobotReset(2)">Reset Robot</button>
+        </div>
+      </div>
+      <div class="muted" style="margin-top:8px">Auto: Prepare &rarr; free test slot &rarr; operate with device 10s &rarr; return &rarr; dwell at Prepare 10s &rarr; repeat. Stop finishes the active cycle and returns to Prepare.</div>
     </div>
 
     <div class="card">
@@ -354,6 +411,21 @@
   </div>
 </div>
 
+<!-- ROBOT RESET HUMAN SAFETY CHECK -->
+<div class="overlay" id="resetCheckOverlay">
+  <div class="modal">
+    <div class="modal-h"><h3 id="resetCheckTitle">Robot Safety Check</h3><span class="x" onclick="closeOverlay('resetCheckOverlay')">&times;</span></div>
+    <div class="modal-b">
+      <div class="confirm-box" id="resetCheckBody"></div>
+      <div class="warnrow">&#9888; Confirm only after checking that no device remains on the robot.</div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" onclick="closeOverlay('resetCheckOverlay')">Check later</button>
+      <button class="btn btn-green" onclick="confirmRobotEmpty()">Confirmed - Robot is Empty</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOG POPUP -->
 <div class="overlay" id="logOverlay">
   <div class="modal big">
@@ -374,11 +446,12 @@ var FIREBASE_CONFIG={
   messagingSenderId:"821718189730",
   appId:"1:821718189730:web:d098eeb53bfbf4b2a539fb"
 };
-var CLOUD=false, DB=null, DBREF=null, CLIENT_ID='c'+Math.random().toString(36).slice(2,9), SRV_OFFSET=0, applyingRemote=false;
+var OFFLINE_TEST=(new URLSearchParams(window.location.search)).get('offlineTest')==='1';
+var CLOUD=false, DB=null, DBREF=null, AUTOREF=null, RESETREF=null, CLIENT_ID='c'+Math.random().toString(36).slice(2,9), SRV_OFFSET=0, applyingRemote=false;
 try{
-  if(window.firebase && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey.indexOf('PASTE')<0){
+  if(!OFFLINE_TEST && window.firebase && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey.indexOf('PASTE')<0){
     firebase.initializeApp(FIREBASE_CONFIG);
-    DB=firebase.database(); DBREF=DB.ref('shared'); CLOUD=true;
+    DB=firebase.database(); DBREF=DB.ref('shared'); AUTOREF=DB.ref('automation'); RESETREF=DB.ref('robotResets'); CLOUD=true;
     DB.ref('.info/serverTimeOffset').on('value',function(s){ SRV_OFFSET=s.val()||0; });
   }
 }catch(e){ CLOUD=false; }
@@ -421,11 +494,23 @@ function setTheme(t){
 
 /* ---------- state ---------- */
 var COLLIDE_DIST=52;   // motion-sensor safe distance (svg units)
+var AUTO_STATION_DELAY=OFFLINE_TEST?1200:10000;  // production: 10s station operation; shorter only in isolated tests
+var AUTO_PREPARE_DELAY=OFFLINE_TEST?1200:10000;  // production: 10s Prepare dwell; shorter only in isolated tests
+var ROBOT_RESET_DELAY=OFFLINE_TEST?1200:10000;  // production: 10s safety stop before returning to Prepare
 var state={ robot:null, stage:'robot', dest:null, slot:null, pendingSlot:null, activeView:'main',
   rloc:{1:'prepare',2:'prepare'}, rstn:{1:null,2:null}, rIdx:{1:null,2:null}, rLbl:{1:null,2:null},
   rpos:{1:[752,120],2:[752,175]}, busyR:{1:false,2:false},
-  mov:{1:null,2:null}, target:{1:null,2:null}, slotMode:'deliver', slotStn:null, tDur:10000, _raf:null, _last:null };
+  mov:{1:null,2:null}, target:{1:null,2:null}, slotMode:'deliver', slotStn:null, tDur:(OFFLINE_TEST?1200:10000), _raf:null, _last:null };
 var robotStatus={1:'Idle - at Prepare',2:'Idle - at Prepare'};
+var AUTO={
+  1:{enabled:false,stopRequested:false,owner:null,phase:'off',timer:null,cycle:0,deliveredThisCycle:false,dwellUntil:0},
+  2:{enabled:false,stopRequested:false,owner:null,phase:'off',timer:null,cycle:0,deliveredThisCycle:false,dwellUntil:0}
+};
+var RESET={
+  1:{active:false,owner:null,phase:'off',dwellUntil:0,timer:null},
+  2:{active:false,owner:null,phase:'off',dwellUntil:0,timer:null}
+};
+var RESET_CHECK_ROBOT=null;
 var logLines=0;
 var occupied={};
 for(var s=1;s<=N_TEST;s++){occupied[s]=new Set();for(var i=0;i<16;i++){if((s*7+i*3)%5===0)occupied[s].add(i);}}
@@ -442,7 +527,7 @@ function showView(v){
   else{var n=v==='r1'?1:2;document.getElementById('page'+v.toUpperCase()).classList.add('active');document.getElementById('nav-'+v).classList.add('on');renderRobotPage(n);}
   drawPlan();
 }
-function locLabel(n){var l=state.rloc[n];return l==='prepare'?'Prepare':(l==='storage'?'Storage':('Stn '+state.rstn[n]));}
+function locLabel(n){var l=state.rloc[n];return l==='prepare'?'Prepare':(l==='storage'?'Storage':(l==='reset'?'Safety Stop':('Stn '+state.rstn[n])));}
 function refreshNav(){
   [1,2].forEach(function(n){
     var e=document.getElementById('nav-r'+n+'-loc'); if(e)e.textContent='('+locLabel(n)+')';
@@ -454,7 +539,9 @@ function refreshNav(){
 /* ---------- guide ---------- */
 function setStep(a,b,c){var m={on:'stepitem on',done:'stepitem done',off:'stepitem'};
   document.getElementById('st1').className=m[a];document.getElementById('st2').className=m[b];document.getElementById('st3').className=m[c];}
-function availRobots(){var a=[];if(state.rloc[1]==='prepare'&&!state.busyR[1])a.push(1);if(state.rloc[2]==='prepare'&&!state.busyR[2])a.push(2);return a;}
+function autoIsActive(n){return !!(AUTO[n].enabled||AUTO[n].stopRequested);}
+function robotIsLocked(n){return autoIsActive(n)||!!RESET[n].active;}
+function availRobots(){var a=[];if(state.rloc[1]==='prepare'&&!state.busyR[1]&&!robotIsLocked(1))a.push(1);if(state.rloc[2]==='prepare'&&!state.busyR[2]&&!robotIsLocked(2))a.push(2);return a;}
 function updateGuide(){
   var g=document.getElementById('guide');
   g.classList.remove('alert');
@@ -476,6 +563,8 @@ function updateGuide(){
 
 /* ---------- robot select / station / tooltip ---------- */
 function pickRobot(n){
+  if(RESET[n].active){ flashGuide('Robot '+n+' is locked by the safety reset. Complete the human device check before assigning it.'); return; }
+  if(autoIsActive(n)){ flashGuide('Robot '+n+' is controlled by Auto Mode. Stop Auto and wait for it to return to Prepare before using manual commands.'); return; }
   if(state.busyR[n]) return;
   if(state.rloc[n]!=='prepare'){ flashGuide('Robot '+n+' is away ('+locLabel(n)+'). Use its Control page to return it.'); return; }
   state.orderRobot=n;
@@ -496,6 +585,7 @@ function orderWithdraw(){
 function setRobotStatus(n,txt){ robotStatus[n]=txt; var e=document.getElementById('rs-'+n); if(e)e.textContent=txt; var e2=document.getElementById('r'+n+'-stat'); if(e2)e2.textContent=txt; refreshNav(); }
 function pickRobotPrompt(){ if(state.stage==='robot' && availRobots().length>0){ flashGuide('Select an available robot inside the Prepare box.'); } }
 function stationClick(i){
+  if(Date.now()<SUPPRESS_STATION_CLICK_UNTIL) return;
   if(state.stage!=='station'){ if(state.stage==='robot' && state.activeView==='main'){ flashGuide('Select a robot in the Prepare box first (Step 1).'); } return; }
   if(occupied[i].size>=16){ flashGuide('Station '+i+' is FULL - choose another.'); return; }
   if(state.target[1]===i || state.target[2]===i){ var who=(state.target[1]===i)?1:2; flashGuide('Station '+i+' is assigned to Robot '+who+'. Only one robot per test station - choose another.'); return; }
@@ -509,7 +599,15 @@ function flashGuide(msg){ if(state.activeView!=='main')return; var g=document.ge
 function showTip(evt,i){
   if(state.activeView!=='main')return;
   var tip=document.getElementById('tip'); var occ=occupied[i].size, free=16-occ, full=occ>=16;
-  tip.innerHTML='<b>Station '+i+'</b> &middot; <span style="color:#12b76a;font-weight:700">'+free+' free</span> / <span style="color:#e0455e;font-weight:700">'+occ+' occ</span>'+(full?' <span style="color:#e0455e;font-weight:700">FULL</span>':'');
+  var cells='';
+  for(var row=0;row<8;row++){
+    for(var col=0;col<2;col++){
+      var idx=row+(col?8:0), used=occupied[i].has(idx), label=(col?'B':'A')+(row+1);
+      cells+='<span class="tip-slot '+(used?'used':'free')+'"><span>'+label+'</span><span style="display:flex;align-items:center;gap:4px"><i></i>'+(used?'occupied':'free')+'</span></span>';
+    }
+  }
+  tip.className='tip slot-spectator';
+  tip.innerHTML='<div class="tip-slot-head"><b>Station '+i+' slot layout</b><span><span style="color:#12b76a;font-weight:700">'+free+' free</span> / <span style="color:#e0455e;font-weight:700">'+occ+' occupied</span>'+(full?' &middot; <span style="color:#e0455e;font-weight:700">FULL</span>':'')+'</span></div><div class="tip-slot-grid">'+cells+'</div>';
   tip.style.display='block';
   var tw=tip.offsetWidth, th=tip.offsetHeight;
   var lx=evt.clientX+14, ty=evt.clientY+14;
@@ -517,7 +615,37 @@ function showTip(evt,i){
   if(ty+th>window.innerHeight-6) ty=evt.clientY-th-14;
   tip.style.left=lx+'px'; tip.style.top=ty+'px';
 }
-function hideTip(){document.getElementById('tip').style.display='none';}
+function hideTip(){var tip=document.getElementById('tip');tip.style.display='none';tip.className='tip';}
+
+/* ---------- iPad / touch station slot spectator ---------- */
+var TOUCH_HOLD_TIMER=null, TOUCH_HOLD_ACTIVE=false, TOUCH_STATION=null, TOUCH_POINT=null, SUPPRESS_STATION_CLICK_UNTIL=0;
+function clearStationTouch(){
+  if(TOUCH_HOLD_TIMER){clearTimeout(TOUCH_HOLD_TIMER);TOUCH_HOLD_TIMER=null;}
+  TOUCH_HOLD_ACTIVE=false; TOUCH_STATION=null; TOUCH_POINT=null;
+}
+function stationTouchStart(evt,i){
+  if(!evt.touches||evt.touches.length!==1) return;
+  clearStationTouch();
+  var t=evt.touches[0]; TOUCH_STATION=i; TOUCH_POINT={x:t.clientX,y:t.clientY};
+  TOUCH_HOLD_TIMER=setTimeout(function(){
+    TOUCH_HOLD_TIMER=null;
+    if(TOUCH_STATION!==i||!TOUCH_POINT) return;
+    TOUCH_HOLD_ACTIVE=true; SUPPRESS_STATION_CLICK_UNTIL=Date.now()+900;
+    showTip({clientX:TOUCH_POINT.x,clientY:TOUCH_POINT.y},i);
+  },500);
+}
+function stationTouchMove(evt,i){
+  if(TOUCH_STATION!==i||!evt.touches||evt.touches.length!==1) return;
+  var t=evt.touches[0], box=evt.currentTarget.getBoundingClientRect();
+  var inside=t.clientX>=box.left&&t.clientX<=box.right&&t.clientY>=box.top&&t.clientY<=box.bottom;
+  if(!inside){clearStationTouch();hideTip();return;}
+  TOUCH_POINT={x:t.clientX,y:t.clientY};
+  if(TOUCH_HOLD_ACTIVE){evt.preventDefault();showTip({clientX:t.clientX,clientY:t.clientY},i);}
+}
+function stationTouchEnd(evt){
+  if(TOUCH_HOLD_ACTIVE){SUPPRESS_STATION_CLICK_UNTIL=Date.now()+900;if(evt)evt.preventDefault();}
+  clearStationTouch(); hideTip();
+}
 
 /* ---------- log ---------- */
 function openLog(){document.getElementById('logOverlay').classList.add('show');}
@@ -730,14 +858,345 @@ function closeOverlay(id){
   if(id==='slotOverlay' && state.stage==='slot'){ state.stage='station'; updateGuide(); drawPlan(); }
 }
 
+/* ---------- additive automatic cycle controls ---------- */
+function autoPhaseText(n){
+  var a=AUTO[n];
+  if(a.phase==='operating'){
+    var secs=Math.max(0,Math.ceil((a.dwellUntil-cloudNow())/1000));
+    return (a.stopRequested?'Stopping - finishing station operation':'Auto ON - operating with device')+' at Station '+(state.rstn[n]||'-')+' ('+secs+'s), then return to Prepare';
+  }
+  if(a.phase==='prepareDwell'){
+    var prepSecs=Math.max(0,Math.ceil((a.dwellUntil-cloudNow())/1000));
+    return 'Auto ON - dwelling at Prepare ('+prepSecs+'s) before next cycle';
+  }
+  if(a.stopRequested) return 'Stopping - finishing the active cycle, then Prepare';
+  if(!a.enabled) return 'Off - manual control';
+  if(a.phase==='delivering') return 'Auto ON - delivering cycle '+(a.cycle+1);
+  if(a.phase==='returning') return 'Auto ON - returning to Prepare';
+  if(a.phase==='waiting') return 'Auto ON - waiting at Prepare for a free slot';
+  return 'Auto ON - preparing next cycle';
+}
+function renderAutoControls(){
+  [1,2].forEach(function(n){
+    var a=AUTO[n], reset=RESET[n], btn=document.getElementById('autoBtn'+n), txt=document.getElementById('autoState'+n), resetBtn=document.getElementById('robotResetBtn'+n);
+    if(!btn||!txt||!resetBtn) return;
+    txt.textContent=reset.active?resetPhaseText(n):autoPhaseText(n);
+    btn.className='auto-btn'+(a.stopRequested?' stopping':(a.enabled?' on':''));
+    btn.textContent=a.stopRequested?'Stopping...':(a.enabled?'Stop Auto':'Start Auto');
+    btn.disabled=!!a.stopRequested||!!reset.active;
+    resetBtn.className='robot-reset-btn'+(reset.phase==='confirm'?' check':(reset.active?' running':''));
+    resetBtn.textContent=reset.phase==='confirm'?'Human Check':(reset.active?(reset.owner===CLIENT_ID?'Resetting...':'Resume Reset'):'Reset Robot');
+    resetBtn.disabled=false;
+  });
+}
+function autoPublish(n){
+  if(!AUTOREF) return;
+  var a=AUTO[n];
+  AUTOREF.child(String(n)).set({enabled:!!a.enabled,stopRequested:!!a.stopRequested,owner:a.owner||null,phase:a.phase||'off',cycle:a.cycle||0,dwellUntil:a.dwellUntil||0,updatedAt:cloudNow()}).catch(function(){});
+}
+function autoSetPhase(n,phase){
+  if(AUTO[n].phase===phase){renderAutoControls();return;}
+  AUTO[n].phase=phase; renderAutoControls(); autoPublish(n);
+}
+function autoSchedule(n,delay){
+  var a=AUTO[n];
+  if(a.owner!==CLIENT_ID) return;
+  if(a.timer) clearTimeout(a.timer);
+  a.timer=setTimeout(function(){a.timer=null;autoAdvance(n);},delay||0);
+}
+function toggleAutoMode(n){
+  var a=AUTO[n];
+  if(RESET[n].active) return;
+  if(a.stopRequested) return;
+  if(a.enabled){
+    a.enabled=false; a.stopRequested=true; a.owner=CLIENT_ID;
+    if(a.phase!=='operating') a.phase='stopping';
+    if(a.timer){clearTimeout(a.timer);a.timer=null;}
+    renderAutoControls(); autoPublish(n);
+    log('<span class="warn">AUTO STOP</span> Robot '+n+' will finish its active job and return to Prepare.');
+    autoSchedule(n,0);
+    return;
+  }
+  if(state.robot===n){
+    state.robot=null; state.dest=null; state.slot=null; state.stage='robot';
+    document.getElementById('sumRobot').textContent='-'; document.getElementById('sumDest').textContent='-'; document.getElementById('sumSlot').textContent='-';
+    ['orderOverlay','slotOverlay','confirmOverlay'].forEach(function(id){document.getElementById(id).classList.remove('show');});
+  }
+  a.enabled=true; a.stopRequested=false; a.owner=CLIENT_ID; a.phase='starting';
+  renderAutoControls(); autoPublish(n);
+  log('<span class="ok">AUTO ON</span> Robot '+n+' automatic delivery cycles enabled.');
+  updateGuide(); drawPlan(); autoSchedule(n,0);
+}
+function autoFindJob(n){
+  var other=(n===1?2:1), stations=[];
+  for(var i=1;i<=N_TEST;i++) stations.push(i);
+  stations.sort(function(a,b){return occupied[a].size-occupied[b].size||a-b;});
+  for(var s=0;s<stations.length;s++){
+    var st=stations[s];
+    if(occupied[st].size>=16||state.target[other]===st) continue;
+    for(var idx=0;idx<16;idx++){
+      if(!occupied[st].has(idx)) return {station:st,idx:idx,label:(idx<8?'A'+(idx+1):'B'+(idx-7))};
+    }
+  }
+  return null;
+}
+function autoAdvance(n){
+  var a=AUTO[n];
+  if(a.owner!==CLIENT_ID) return;
+  if(CLOUD&&!SYNC_READY){autoSchedule(n,350);return;}
+  if(state.busyR[n]){autoSchedule(n,350);return;}
+  if(a.phase==='operating'){
+    var remaining=(a.dwellUntil||0)-cloudNow();
+    if(remaining>0){
+      var secs=Math.max(1,Math.ceil(remaining/1000));
+      setRobotStatus(n,'Operating with device @ Station '+state.rstn[n]+' - '+secs+'s');
+      renderAutoControls(); renderRobotPage(n);
+      autoSchedule(n,Math.min(1000,remaining));
+      return;
+    }
+    a.dwellUntil=0;
+    autoReturnToPrepare(n);
+    return;
+  }
+  if(a.stopRequested||!a.enabled){
+    if(state.rloc[n]==='prepare') autoFinishStop(n);
+    else autoReturnToPrepare(n);
+    return;
+  }
+  if(a.phase==='prepareDwell'){
+    var prepRemaining=(a.dwellUntil||0)-cloudNow();
+    if(prepRemaining>0){
+      var prepSecs=Math.max(1,Math.ceil(prepRemaining/1000));
+      setRobotStatus(n,'Auto dwell at Prepare - '+prepSecs+'s');
+      renderAutoControls(); renderRobotPage(n);
+      autoSchedule(n,Math.min(1000,prepRemaining));
+      return;
+    }
+    a.dwellUntil=0; autoSetPhase(n,'starting');
+  }
+  if(state.rloc[n]!=='prepare'){autoReturnToPrepare(n);return;}
+  var job=autoFindJob(n);
+  if(!job){autoSetPhase(n,'waiting');autoSchedule(n,2000);return;}
+  autoStartDelivery(n,job);
+}
+function autoStartDelivery(n,job){
+  var a=AUTO[n], st=job.station;
+  if(a.owner!==CLIENT_ID||!a.enabled||a.stopRequested) {autoAdvance(n);return;}
+  if(occupied[st].has(job.idx)||occupied[st].size>=16||state.target[n===1?2:1]===st){autoSchedule(n,100);return;}
+  state.target[n]=st;
+  autoSetPhase(n,'delivering');
+  setRobotStatus(n,'Auto delivering to Stn '+st);
+  log('<span class="ok">AUTO DELIVER</span> <b class="r'+n+'">Robot '+n+'</b> '+PREP_NAME+' -&gt; Station '+st+' slot '+job.label+'.');
+  startMove(n,state.rpos[n],STN[st],COL_DELIVER,'Auto delivering',function(){
+    occupied[st].add(job.idx);
+    a.deliveredThisCycle=true;
+    state.rpos[n]=STN[st].slice(); state.rloc[n]='station'; state.rstn[n]=st; state.rIdx[n]=job.idx; state.rLbl[n]=job.label;
+    setRobotStatus(n,'Auto delivered @ Station '+st+' (slot '+job.label+')');
+    log('<span class="warn">AUTO DELIVERED</span> Robot '+n+' placed device in Station '+st+' slot '+job.label+'. Operating with device for 10 seconds.');
+    renderRobotPage(n); drawPlan(); updateGuide();
+    autoBeginStationDelay(n);
+  });
+  renderRobotPage(n); updateGuide(); drawPlan();
+}
+function autoBeginStationDelay(n){
+  var a=AUTO[n];
+  if(a.owner!==CLIENT_ID) return;
+  var delaySecs=Math.round(AUTO_STATION_DELAY/1000);
+  a.dwellUntil=cloudNow()+AUTO_STATION_DELAY;
+  autoSetPhase(n,'operating');
+  setRobotStatus(n,'Operating with device @ Station '+state.rstn[n]+' - '+delaySecs+'s');
+  log('<span class="mv">AUTO OPERATING</span> Robot '+n+' holding at Station '+state.rstn[n]+' for '+delaySecs+' seconds before returning to Prepare.');
+  renderAutoControls(); renderRobotPage(n); drawPlan(); autoSchedule(n,250);
+}
+function autoReturnToPrepare(n){
+  var a=AUTO[n];
+  if(a.owner!==CLIENT_ID||state.busyR[n]) return;
+  if(state.rloc[n]==='prepare'){
+    if(a.stopRequested||!a.enabled) autoFinishStop(n); else autoSchedule(n,100);
+    return;
+  }
+  var from=state.rloc[n], st=state.rstn[n], lb=state.rLbl[n];
+  state.target[n]=null;
+  autoSetPhase(n,a.stopRequested?'stopping':'returning');
+  setRobotStatus(n,a.stopRequested?'Finishing Auto - returning to Prepare':'Auto returning to Prepare');
+  log('<span class="ok">AUTO RETURN</span> Robot '+n+' returning to Prepare'+(from==='station'?'; device remains in Station '+st+' slot '+lb:'')+'.');
+  startMove(n,state.rpos[n],PREP_PARK[n],COL_PREPARE,'Auto to Prepare',function(){
+    state.rpos[n]=PREP_PARK[n].slice(); state.rloc[n]='prepare'; state.rstn[n]=null; state.rIdx[n]=null; state.rLbl[n]=null;
+    setRobotStatus(n,'Idle - at Prepare');
+    if(a.deliveredThisCycle){
+      a.cycle=(a.cycle||0)+1; a.deliveredThisCycle=false;
+      log('<span class="warn">AUTO RETURNED</span> Robot '+n+' completed cycle '+a.cycle+' and is back at Prepare.');
+    }else{
+      log('<span class="warn">AUTO READY</span> Robot '+n+' returned to Prepare and is ready for an automatic cycle.');
+    }
+    renderRobotPage(n); drawPlan(); updateGuide();
+    if(a.stopRequested||!a.enabled) autoFinishStop(n);
+    else autoBeginPrepareDelay(n);
+  });
+  renderRobotPage(n); updateGuide(); drawPlan();
+}
+function autoBeginPrepareDelay(n){
+  var a=AUTO[n];
+  if(a.owner!==CLIENT_ID) return;
+  var delaySecs=Math.round(AUTO_PREPARE_DELAY/1000);
+  a.dwellUntil=cloudNow()+AUTO_PREPARE_DELAY;
+  autoSetPhase(n,'prepareDwell');
+  setRobotStatus(n,'Auto dwell at Prepare - '+delaySecs+'s');
+  log('<span class="mv">AUTO PREPARE DWELL</span> Robot '+n+' waiting at Prepare for '+delaySecs+' seconds before the next cycle.');
+  renderAutoControls(); renderRobotPage(n); drawPlan(); updateGuide(); autoSchedule(n,250);
+}
+function autoFinishStop(n){
+  var a=AUTO[n], wasActive=autoIsActive(n)||a.phase!=='off';
+  if(a.timer){clearTimeout(a.timer);a.timer=null;}
+  a.enabled=false; a.stopRequested=false; a.phase='off'; a.owner=null; a.dwellUntil=0; a.deliveredThisCycle=false;
+  if(state.rloc[n]==='prepare') setRobotStatus(n,'Idle - at Prepare');
+  renderAutoControls(); autoPublish(n); renderRobotPage(n); updateGuide(); drawPlan();
+  if(wasActive) log('<span class="warn">AUTO OFF</span> Robot '+n+' stopped safely at Prepare and is ready for manual command.');
+}
+function applyAutoRemote(v){
+  v=v||{};
+  [1,2].forEach(function(n){
+    var rec=v[n]||v[String(n)]||{}, a=AUTO[n];
+    a.enabled=!!rec.enabled; a.stopRequested=!!rec.stopRequested; a.owner=rec.owner||null; a.phase=rec.phase||'off'; a.cycle=rec.cycle||0; a.dwellUntil=rec.dwellUntil||0;
+    if(a.owner===CLIENT_ID) autoSchedule(n,50);
+    else if(a.timer){clearTimeout(a.timer);a.timer=null;}
+  });
+  renderAutoControls(); updateGuide(); renderRobotPage(1); renderRobotPage(2); drawPlan();
+}
+
+/* ---------- per-robot safety reset ---------- */
+function resetPhaseText(n){
+  var r=RESET[n];
+  if(r.phase==='dwell') return 'Safety stop dwell before returning to Prepare';
+  if(r.phase==='returning') return 'Safety reset returning to Prepare';
+  if(r.phase==='confirm') return 'Awaiting human confirmation that robot is empty';
+  return 'Safety reset off';
+}
+function resetPublish(n){
+  if(!RESETREF) return;
+  var r=RESET[n];
+  RESETREF.child(String(n)).set({active:!!r.active,owner:r.owner||null,phase:r.phase||'off',dwellUntil:r.dwellUntil||0,updatedAt:cloudNow()}).catch(function(){});
+}
+function resetSchedule(n,delay){
+  var r=RESET[n];
+  if(r.owner!==CLIENT_ID) return;
+  if(r.timer) clearTimeout(r.timer);
+  r.timer=setTimeout(function(){r.timer=null;resetAdvance(n);},delay||0);
+}
+function startRobotReset(n){
+  var r=RESET[n], a=AUTO[n];
+  if(r.active){
+    r.owner=CLIENT_ID; resetPublish(n);
+    if(r.phase==='confirm'){openResetCheck(n);}
+    else if(r.phase==='returning'){
+      var activeMove=state.mov[n];
+      if(activeMove) state.rpos[n]=polyAt(activeMove.pts,moveFr(activeMove));
+      state.mov[n]=null; state.target[n]=null; state.busyR[n]=true; pushShared(); resetReturnToPrepare(n);
+    }else resetSchedule(n,0);
+    return;
+  }
+  if(a.timer){clearTimeout(a.timer);a.timer=null;}
+  a.enabled=false; a.stopRequested=false; a.owner=null; a.phase='off'; a.dwellUntil=0; a.deliveredThisCycle=false;
+  autoPublish(n);
+  var m=state.mov[n];
+  if(m){state.rpos[n]=polyAt(m.pts,moveFr(m));}
+  state.mov[n]=null; state.target[n]=null; state.busyR[n]=true;
+  state.rloc[n]='reset'; state.rstn[n]=null; state.rIdx[n]=null; state.rLbl[n]=null;
+  if(state.robot===n){
+    state.robot=null; state.dest=null; state.slot=null; state.stage='robot';
+    document.getElementById('sumRobot').textContent='-'; document.getElementById('sumDest').textContent='-'; document.getElementById('sumSlot').textContent='-';
+  }
+  ['orderOverlay','slotOverlay','confirmOverlay','storeOverlay'].forEach(function(id){document.getElementById(id).classList.remove('show');});
+  var resetSecs=Math.round(ROBOT_RESET_DELAY/1000);
+  r.active=true; r.owner=CLIENT_ID; r.phase='dwell'; r.dwellUntil=cloudNow()+ROBOT_RESET_DELAY;
+  setRobotStatus(n,'Safety reset stop - dwell '+resetSecs+'s');
+  renderAutoControls(); resetPublish(n); pushShared();
+  log('<span class="warn">ROBOT RESET</span> Robot '+n+' stopped immediately. Auto is Off; '+resetSecs+'s safety dwell started before return to Prepare.');
+  renderRobotPage(n); drawPlan(); updateGuide(); resetSchedule(n,250);
+}
+function resetAdvance(n){
+  var r=RESET[n];
+  if(!r.active||r.owner!==CLIENT_ID) return;
+  if(r.phase==='dwell'){
+    var remaining=(r.dwellUntil||0)-cloudNow();
+    if(remaining>0){
+      var secs=Math.max(1,Math.ceil(remaining/1000));
+      setRobotStatus(n,'Safety reset stop - dwell '+secs+'s');
+      renderAutoControls(); renderRobotPage(n); resetSchedule(n,Math.min(1000,remaining));
+      return;
+    }
+    r.dwellUntil=0; resetReturnToPrepare(n); return;
+  }
+  if(r.phase==='returning'&&state.busyR[n]) return;
+  if(r.phase==='confirm') openResetCheck(n);
+}
+function resetReturnToPrepare(n){
+  var r=RESET[n];
+  if(!r.active||r.owner!==CLIENT_ID) return;
+  var dx=state.rpos[n][0]-PREP_PARK[n][0], dy=state.rpos[n][1]-PREP_PARK[n][1];
+  if(Math.hypot(dx,dy)<1){resetAwaitHumanCheck(n);return;}
+  r.phase='returning'; resetPublish(n);
+  setRobotStatus(n,'Safety reset - returning to Prepare');
+  log('<span class="ok">RESET RETURN</span> Robot '+n+' returning to Prepare after safety dwell.');
+  startMove(n,state.rpos[n],PREP_PARK[n],COL_PREPARE,'Reset to Prepare',function(){
+    state.rpos[n]=PREP_PARK[n].slice();
+    resetAwaitHumanCheck(n);
+  });
+  renderAutoControls(); renderRobotPage(n); drawPlan(); updateGuide();
+}
+function resetAwaitHumanCheck(n){
+  var r=RESET[n];
+  state.mov[n]=null; state.target[n]=null; state.busyR[n]=true;
+  state.rpos[n]=PREP_PARK[n].slice(); state.rloc[n]='prepare'; state.rstn[n]=null; state.rIdx[n]=null; state.rLbl[n]=null;
+  r.phase='confirm'; r.dwellUntil=0;
+  setRobotStatus(n,'Locked at Prepare - human device check required');
+  resetPublish(n); pushShared(); renderAutoControls(); renderRobotPage(n); drawPlan(); updateGuide();
+  log('<span class="warn">RESET CHECK</span> Robot '+n+' is at Prepare. Confirm the robot is not carrying a device before reuse.');
+  openResetCheck(n);
+}
+function openResetCheck(n){
+  if(!RESET[n].active||RESET[n].phase!=='confirm') return;
+  RESET_CHECK_ROBOT=n;
+  document.getElementById('resetCheckTitle').textContent='Robot '+n+' - Human Device Check';
+  document.getElementById('resetCheckBody').innerHTML=
+     '<div><span class="k">Robot:</span> <b>Robot '+n+'</b></div>'
+    +'<div><span class="k">Location:</span> <b>Prepare Station</b></div>'
+    +'<div style="margin-top:8px">Check whether a device is still carried on the robot. If a device is present, remove it safely. Press Confirm only when the robot is <b>empty</b>.</div>';
+  document.getElementById('resetCheckOverlay').classList.add('show');
+}
+function confirmRobotEmpty(){
+  var n=RESET_CHECK_ROBOT;
+  if(!n||!RESET[n].active||RESET[n].phase!=='confirm') return;
+  closeOverlay('resetCheckOverlay'); RESET_CHECK_ROBOT=null;
+  var r=RESET[n];
+  if(r.timer){clearTimeout(r.timer);r.timer=null;}
+  r.active=false; r.owner=null; r.phase='off'; r.dwellUntil=0;
+  state.busyR[n]=false; state.mov[n]=null; state.target[n]=null;
+  setRobotStatus(n,'Idle - at Prepare');
+  resetPublish(n); pushShared(); renderAutoControls(); renderRobotPage(n); drawPlan(); updateGuide();
+  log('<span class="ok">RESET COMPLETE</span> Human confirmed Robot '+n+' is empty. Robot is unlocked and available at Prepare.');
+}
+function applyResetRemote(v){
+  v=v||{};
+  [1,2].forEach(function(n){
+    var rec=v[n]||v[String(n)]||{}, r=RESET[n];
+    r.active=!!rec.active; r.owner=rec.owner||null; r.phase=rec.phase||'off'; r.dwellUntil=rec.dwellUntil||0;
+    if(r.active&&r.owner===CLIENT_ID) resetSchedule(n,50);
+    else if(r.timer){clearTimeout(r.timer);r.timer=null;}
+  });
+  renderAutoControls(); updateGuide(); renderRobotPage(1); renderRobotPage(2); drawPlan();
+}
+
 /* ---------- robot control pages ---------- */
 function renderRobotPage(n){
   var loc=state.rloc[n]; var pill=document.getElementById('r'+n+'-locpill');
-  pill.className='locpill '+(loc==='prepare'?'lp-prep':(loc==='storage'?'lp-store':'lp-stn'));
-  pill.textContent=(loc==='prepare'?'At Prepare Station':(loc==='storage'?'At Storage':('At Test Station '+state.rstn[n])));
+  pill.className='locpill '+(loc==='prepare'?'lp-prep':(loc==='storage'||loc==='reset'?'lp-store':'lp-stn'));
+  pill.textContent=(loc==='prepare'?'At Prepare Station':(loc==='storage'?'At Storage':(loc==='reset'?'Safety Stop / Reset':('At Test Station '+state.rstn[n]))));
   document.getElementById('r'+n+'-stat').textContent=robotStatus[n];
   var cmds=document.getElementById('r'+n+'-cmds'), note=document.getElementById('r'+n+'-note');
   cmds.innerHTML=''; note.innerHTML='';
+  if(RESET[n].active){ note.innerHTML='<b>Safety Reset:</b> '+resetPhaseText(n)+'. Robot remains locked until the human device check is confirmed.'; return; }
+  if(autoIsActive(n)){ note.innerHTML='<b>Auto Mode:</b> '+autoPhaseText(n)+'. Manual commands are locked until Auto stops safely at Prepare.'; return; }
   if(state.busyR[n]){ note.innerHTML='Robot '+n+' is moving... watch the running line on the map.'; return; }
   if(loc==='prepare'){ note.innerHTML='Robot '+n+' is at Prepare and <b>available</b> on the main Floor Plan dashboard. No transport command needed here.'; }
   else if(loc==='station'){
@@ -750,6 +1209,7 @@ function renderRobotPage(n){
   }
 }
 function robotCmd(n,target){
+  if(robotIsLocked(n)){ return; }
   if(state.busyR[n]) return;
   if(target==='storage'){ openStoreSlotPopup(n); return; }   // pick device slot, then human-load confirm
   var from=state.rloc[n], dn=state.rstn[n], lb=state.rLbl[n];
@@ -780,7 +1240,7 @@ function drawPlan(){
     if(resBy){ subTxt='Robot '+resBy+' here'; subFill=(resBy===1?P.r1:P.r2); }
     else if(full){ subTxt='FULL'; subFill=P.stnFullSub; }
     else { subTxt=(16-occupied[i].size)+' free'; subFill='#0f9e5e'; subCls=' class="freeblink"'; }
-    return '<g style="cursor:pointer" onclick="stationClick('+i+')" onmousemove="showTip(evt,'+i+')" onmouseout="hideTip()">'
+    return '<g style="cursor:pointer" onclick="stationClick('+i+')" onmousemove="showTip(evt,'+i+')" onmouseout="hideTip()" ontouchstart="stationTouchStart(event,'+i+')" ontouchmove="stationTouchMove(event,'+i+')" ontouchend="stationTouchEnd(event)" ontouchcancel="stationTouchEnd(event)" oncontextmenu="return false">'
       +'<rect'+cls+' x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="7" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(sel?3:(resBy?2.2:1.4))+'"/>'
       +'<text x="'+(x+w/2)+'" y="'+(y+h/2-4)+'" fill="'+P.stnTitle+'" font-size="13" font-weight="700" text-anchor="middle">Station '+i+'</text>'
       +'<text'+subCls+' x="'+(x+w/2)+'" y="'+(y+h/2+13)+'" fill="'+subFill+'" font-size="10" font-weight="'+(subCls?'700':'400')+'" text-anchor="middle">'+subTxt+'</text></g>';
@@ -886,13 +1346,15 @@ function applyShared(v){
 }
 
 /* ---------- boot ---------- */
-updateGuide(); drawPlan(); renderRobotPage(1); renderRobotPage(2);
+renderAutoControls(); updateGuide(); drawPlan(); renderRobotPage(1); renderRobotPage(2);
 if(CLOUD){
   DBREF.on('value', function(snap){
     var v=snap.val();
     if(!v){ SYNC_READY=true; pushShared(); log('Cloud sync ON - seeded shared state.'); }
     else { applyShared(v); if(!SYNC_READY){ SYNC_READY=true; log('Cloud sync ON - joined shared state.'); } }
   });
+  AUTOREF.on('value',function(snap){applyAutoRemote(snap.val());});
+  RESETREF.on('value',function(snap){applyResetRemote(snap.val());});
 }else{
   LOGARR.push({t:new Date().toLocaleTimeString('en-GB'), m:'Local mode (no cloud). Deliver Prepare -> Test; Control pages move robots.'}); renderLog();
 }
