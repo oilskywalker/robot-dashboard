@@ -256,7 +256,7 @@
       </div>
       <div class="legend">
         <span><i class="lg-dot" style="background:var(--green)"></i>&#9733; Prepare (select robot)</span>
-        <span><i class="lg-dot" style="background:#5aa0ff"></i>Test station (hover / click / tap for slots)</span>
+        <span><i class="lg-dot" style="background:#5aa0ff"></i>Test station (hover / double-click / double-tap for slots)</span>
         <span><i class="lg-dot" style="background:var(--red)"></i>Full station</span>
         <span><i class="lg-dot" style="background:#d9a94a"></i>Storage</span>
         <span><i class="lg-line" style="border-color:#0e9d8f"></i>Deliver line</span>
@@ -651,8 +651,8 @@ function stationClick(i,evt){
   if(Date.now()<SUPPRESS_STATION_CLICK_UNTIL) return;
   if(state.stage!=='station'){
     if(state.activeView==='main'&&evt&&evt.clientX!=null){
-      if(PINNED_SPECTATOR_STATION===i){PINNED_SPECTATOR_STATION=null;SUPPRESS_HOVER_STATION=i;hideTip(true);}
-      else{PINNED_SPECTATOR_STATION=i;SUPPRESS_HOVER_STATION=null;showTip(evt,i);}
+      if(PINNED_SPECTATOR_STATION!==null){LAST_PINNED_CLOSE_AT=Date.now();PINNED_SPECTATOR_STATION=null;}
+      SUPPRESS_HOVER_STATION=i;hideTip(true);
       return;
     }
     if(state.stage==='robot' && state.activeView==='main'){ flashGuide('Select a robot in the Prepare box first (Step 1).'); }
@@ -664,6 +664,12 @@ function stationClick(i,evt){
   state.dest=i; document.getElementById('sumDest').textContent='Test Station '+i;
   state.slot=null; document.getElementById('sumSlot').textContent='-';
   state.stage='slot'; updateGuide(); drawPlan(); openSlotPopup();
+}
+function stationDoubleClick(i,evt){
+  if(Date.now()<SUPPRESS_STATION_CLICK_UNTIL||Date.now()-LAST_PINNED_CLOSE_AT<550) return;
+  if(state.activeView!=='main'||state.stage==='station') return;
+  PINNED_SPECTATOR_STATION=i;SUPPRESS_HOVER_STATION=null;showTip(evt,i);
+  if(evt&&evt.preventDefault)evt.preventDefault();
 }
 function flashGuide(msg){ if(state.activeView!=='main')return; var g=document.getElementById('guide');
   g.style.borderLeftColor='#ffb020'; g.innerHTML='<b style="color:#ffb020">'+msg+'</b>';
@@ -714,7 +720,7 @@ function stationMouseMove(evt,i){
 function stationMouseOut(i){if(SUPPRESS_HOVER_STATION===i)SUPPRESS_HOVER_STATION=null;hideTip();}
 
 /* ---------- iPad / touch station slot spectator ---------- */
-var TOUCH_STATION=null, TOUCH_START_POINT=null, TOUCH_POINT=null, TOUCH_MOVED=false, PINNED_SPECTATOR_STATION=null, SUPPRESS_HOVER_STATION=null, SUPPRESS_STATION_CLICK_UNTIL=0;
+var TOUCH_STATION=null, TOUCH_START_POINT=null, TOUCH_POINT=null, TOUCH_MOVED=false, PINNED_SPECTATOR_STATION=null, SUPPRESS_HOVER_STATION=null, SUPPRESS_STATION_CLICK_UNTIL=0, LAST_PINNED_CLOSE_AT=0, LAST_TOUCH_TAP_STATION=null, LAST_TOUCH_TAP_AT=0;
 function clearStationTouch(){
   TOUCH_STATION=null; TOUCH_START_POINT=null; TOUCH_POINT=null; TOUCH_MOVED=false;
 }
@@ -738,11 +744,16 @@ function stationTouchEnd(evt,i){
   var t=evt.changedTouches&&evt.changedTouches[0], point=t?{x:t.clientX,y:t.clientY}:TOUCH_POINT;
   var toggle=!TOUCH_MOVED&&point&&state.activeView==='main'&&state.stage!=='station';
   clearStationTouch();
-  if(!toggle) return;
+  if(!toggle){LAST_TOUCH_TAP_STATION=null;LAST_TOUCH_TAP_AT=0;return;}
   SUPPRESS_STATION_CLICK_UNTIL=Date.now()+900;
   if(evt.cancelable) evt.preventDefault();
-  if(PINNED_SPECTATOR_STATION===i){PINNED_SPECTATOR_STATION=null;hideTip(true);}
-  else{PINNED_SPECTATOR_STATION=i;showTip({clientX:point.x,clientY:point.y},i);}
+  if(PINNED_SPECTATOR_STATION!==null){
+    PINNED_SPECTATOR_STATION=null;LAST_TOUCH_TAP_STATION=null;LAST_TOUCH_TAP_AT=0;hideTip(true);return;
+  }
+  var now=Date.now(), doubleTap=LAST_TOUCH_TAP_STATION===i&&now-LAST_TOUCH_TAP_AT<=500;
+  if(doubleTap){
+    PINNED_SPECTATOR_STATION=i;LAST_TOUCH_TAP_STATION=null;LAST_TOUCH_TAP_AT=0;showTip({clientX:point.x,clientY:point.y},i);
+  }else{LAST_TOUCH_TAP_STATION=i;LAST_TOUCH_TAP_AT=now;}
 }
 function stationTouchCancel(){clearStationTouch();}
 
@@ -1339,7 +1350,7 @@ function drawPlan(){
     if(resBy){ subTxt='Robot '+resBy+' here'; subFill=(resBy===1?P.r1:P.r2); }
     else if(full){ subTxt='FULL'; subFill=P.stnFullSub; }
     else { subTxt=(16-occupied[i].size)+' free'; subFill='#0f9e5e'; subCls=' class="freeblink"'; }
-    return '<g style="cursor:pointer" onclick="stationClick('+i+',evt)" onmousemove="stationMouseMove(evt,'+i+')" onmouseout="stationMouseOut('+i+')" ontouchstart="stationTouchStart(event,'+i+')" ontouchmove="stationTouchMove(event,'+i+')" ontouchend="stationTouchEnd(event,'+i+')" ontouchcancel="stationTouchCancel()" oncontextmenu="return false">'
+    return '<g style="cursor:pointer;touch-action:manipulation" onclick="stationClick('+i+',evt)" ondblclick="stationDoubleClick('+i+',evt)" onmousemove="stationMouseMove(evt,'+i+')" onmouseout="stationMouseOut('+i+')" ontouchstart="stationTouchStart(event,'+i+')" ontouchmove="stationTouchMove(event,'+i+')" ontouchend="stationTouchEnd(event,'+i+')" ontouchcancel="stationTouchCancel()" oncontextmenu="return false">'
       +'<rect'+cls+' x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="7" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(sel?3:(resBy?2.2:1.4))+'"/>'
       +'<text x="'+(x+w/2)+'" y="'+(y+h/2-4)+'" fill="'+P.stnTitle+'" font-size="13" font-weight="700" text-anchor="middle">Station '+i+'</text>'
       +'<text'+subCls+' x="'+(x+w/2)+'" y="'+(y+h/2+13)+'" fill="'+subFill+'" font-size="10" font-weight="'+(subCls?'700':'400')+'" text-anchor="middle">'+subTxt+'</text></g>';
