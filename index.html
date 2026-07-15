@@ -249,7 +249,7 @@
       </div>
       <div class="legend">
         <span><i class="lg-dot" style="background:var(--green)"></i>&#9733; Prepare (select robot)</span>
-        <span><i class="lg-dot" style="background:#5aa0ff"></i>Test station (hover / hold for slots)</span>
+        <span><i class="lg-dot" style="background:#5aa0ff"></i>Test station (hover / tap for slots)</span>
         <span><i class="lg-dot" style="background:var(--red)"></i>Full station</span>
         <span><i class="lg-dot" style="background:#d9a94a"></i>Storage</span>
         <span><i class="lg-line" style="border-color:#0e9d8f"></i>Deliver line</span>
@@ -520,6 +520,7 @@ occupied[6]=new Set();for(var i=0;i<14;i++)occupied[6].add(i);   // almost full:
 /* ---------- views ---------- */
 function planContainerId(){ return state.activeView==='main'?'planBox':(state.activeView==='r1'?'planBoxR1':'planBoxR2'); }
 function showView(v){
+  closeTouchSpectator();
   state.activeView=v;
   ['pageMain','pageR1','pageR2'].forEach(function(id){document.getElementById(id).classList.remove('active');});
   ['nav-main','nav-r1','nav-r2'].forEach(function(id){document.getElementById(id).classList.remove('on');});
@@ -615,37 +616,47 @@ function showTip(evt,i){
   if(ty+th>window.innerHeight-6) ty=evt.clientY-th-14;
   tip.style.left=lx+'px'; tip.style.top=ty+'px';
 }
-function hideTip(){var tip=document.getElementById('tip');tip.style.display='none';tip.className='tip';}
+function hideTip(force){
+  if(TOUCH_SPECTATOR_STATION!==null&&!force) return;
+  var tip=document.getElementById('tip');tip.style.display='none';tip.className='tip';
+}
+function stationMouseMove(evt,i){
+  if(evt.sourceCapabilities&&evt.sourceCapabilities.firesTouchEvents) return;
+  TOUCH_SPECTATOR_STATION=null; showTip(evt,i);
+}
 
 /* ---------- iPad / touch station slot spectator ---------- */
-var TOUCH_HOLD_TIMER=null, TOUCH_HOLD_ACTIVE=false, TOUCH_STATION=null, TOUCH_POINT=null, SUPPRESS_STATION_CLICK_UNTIL=0;
+var TOUCH_STATION=null, TOUCH_START_POINT=null, TOUCH_POINT=null, TOUCH_MOVED=false, TOUCH_SPECTATOR_STATION=null, SUPPRESS_STATION_CLICK_UNTIL=0;
 function clearStationTouch(){
-  if(TOUCH_HOLD_TIMER){clearTimeout(TOUCH_HOLD_TIMER);TOUCH_HOLD_TIMER=null;}
-  TOUCH_HOLD_ACTIVE=false; TOUCH_STATION=null; TOUCH_POINT=null;
+  TOUCH_STATION=null; TOUCH_START_POINT=null; TOUCH_POINT=null; TOUCH_MOVED=false;
+}
+function closeTouchSpectator(){
+  TOUCH_SPECTATOR_STATION=null; hideTip(true); clearStationTouch();
 }
 function stationTouchStart(evt,i){
   if(!evt.touches||evt.touches.length!==1) return;
   clearStationTouch();
-  var t=evt.touches[0]; TOUCH_STATION=i; TOUCH_POINT={x:t.clientX,y:t.clientY};
-  TOUCH_HOLD_TIMER=setTimeout(function(){
-    TOUCH_HOLD_TIMER=null;
-    if(TOUCH_STATION!==i||!TOUCH_POINT) return;
-    TOUCH_HOLD_ACTIVE=true; SUPPRESS_STATION_CLICK_UNTIL=Date.now()+900;
-    showTip({clientX:TOUCH_POINT.x,clientY:TOUCH_POINT.y},i);
-  },500);
+  var t=evt.touches[0];
+  TOUCH_STATION=i; TOUCH_START_POINT={x:t.clientX,y:t.clientY}; TOUCH_POINT={x:t.clientX,y:t.clientY};
 }
 function stationTouchMove(evt,i){
   if(TOUCH_STATION!==i||!evt.touches||evt.touches.length!==1) return;
-  var t=evt.touches[0], box=evt.currentTarget.getBoundingClientRect();
-  var inside=t.clientX>=box.left&&t.clientX<=box.right&&t.clientY>=box.top&&t.clientY<=box.bottom;
-  if(!inside){clearStationTouch();hideTip();return;}
+  var t=evt.touches[0];
   TOUCH_POINT={x:t.clientX,y:t.clientY};
-  if(TOUCH_HOLD_ACTIVE){evt.preventDefault();showTip({clientX:t.clientX,clientY:t.clientY},i);}
+  if(TOUCH_START_POINT&&Math.hypot(t.clientX-TOUCH_START_POINT.x,t.clientY-TOUCH_START_POINT.y)>12) TOUCH_MOVED=true;
 }
-function stationTouchEnd(evt){
-  if(TOUCH_HOLD_ACTIVE){SUPPRESS_STATION_CLICK_UNTIL=Date.now()+900;if(evt)evt.preventDefault();}
-  clearStationTouch(); hideTip();
+function stationTouchEnd(evt,i){
+  if(TOUCH_STATION!==i){clearStationTouch();return;}
+  var t=evt.changedTouches&&evt.changedTouches[0], point=t?{x:t.clientX,y:t.clientY}:TOUCH_POINT;
+  var toggle=!TOUCH_MOVED&&point&&state.activeView==='main'&&state.stage!=='station';
+  clearStationTouch();
+  if(!toggle) return;
+  SUPPRESS_STATION_CLICK_UNTIL=Date.now()+900;
+  if(evt.cancelable) evt.preventDefault();
+  if(TOUCH_SPECTATOR_STATION===i){TOUCH_SPECTATOR_STATION=null;hideTip(true);}
+  else{TOUCH_SPECTATOR_STATION=i;showTip({clientX:point.x,clientY:point.y},i);}
 }
+function stationTouchCancel(){clearStationTouch();}
 
 /* ---------- log ---------- */
 function openLog(){document.getElementById('logOverlay').classList.add('show');}
@@ -1240,7 +1251,7 @@ function drawPlan(){
     if(resBy){ subTxt='Robot '+resBy+' here'; subFill=(resBy===1?P.r1:P.r2); }
     else if(full){ subTxt='FULL'; subFill=P.stnFullSub; }
     else { subTxt=(16-occupied[i].size)+' free'; subFill='#0f9e5e'; subCls=' class="freeblink"'; }
-    return '<g style="cursor:pointer" onclick="stationClick('+i+')" onmousemove="showTip(evt,'+i+')" onmouseout="hideTip()" ontouchstart="stationTouchStart(event,'+i+')" ontouchmove="stationTouchMove(event,'+i+')" ontouchend="stationTouchEnd(event)" ontouchcancel="stationTouchEnd(event)" oncontextmenu="return false">'
+    return '<g style="cursor:pointer" onclick="stationClick('+i+')" onmousemove="stationMouseMove(evt,'+i+')" onmouseout="hideTip()" ontouchstart="stationTouchStart(event,'+i+')" ontouchmove="stationTouchMove(event,'+i+')" ontouchend="stationTouchEnd(event,'+i+')" ontouchcancel="stationTouchCancel()" oncontextmenu="return false">'
       +'<rect'+cls+' x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="7" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(sel?3:(resBy?2.2:1.4))+'"/>'
       +'<text x="'+(x+w/2)+'" y="'+(y+h/2-4)+'" fill="'+P.stnTitle+'" font-size="13" font-weight="700" text-anchor="middle">Station '+i+'</text>'
       +'<text'+subCls+' x="'+(x+w/2)+'" y="'+(y+h/2+13)+'" fill="'+subFill+'" font-size="10" font-weight="'+(subCls?'700':'400')+'" text-anchor="middle">'+subTxt+'</text></g>';
