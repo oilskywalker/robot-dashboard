@@ -230,7 +230,7 @@
   <h1>REL LAB &middot; <span>Robot Command Dashboard</span></h1>
   <div class="htools">
     <button class="hbtn" id="themeBtn" onclick="toggleTheme()">🌙 Night mode</button>
-    <button class="hbtn on" id="nav-main" onclick="showView('main')">&#128506; Floor Plan (Deliver)</button>
+    <button class="hbtn on" id="nav-main" onclick="showView('main')">&#128225; Live Command Hub</button>
     <button class="hbtn" id="nav-r1" onclick="showView('r1')">&#129302; Robot 1 Control <span class="loc" id="nav-r1-loc">(Prepare)</span></button>
     <button class="hbtn" id="nav-r2" onclick="showView('r2')">&#129302; Robot 2 Control <span class="loc" id="nav-r2-loc">(Prepare)</span></button>
     <button class="hbtn" onclick="openLog()">&#128220; Log <span class="badge" id="logCount">0</span></button>
@@ -242,7 +242,7 @@
 <div class="wrap">
   <div class="col">
     <div class="card plan-card">
-      <h2>Floor Plan - REL LAB (Space 515 Sqm) &middot; Deliver device: Prepare &rarr; Test</h2>
+      <h2>Live Robot Operations - REL LAB (515 Sqm) &middot; Command, monitor &amp; deliver: Prepare &rarr; Test</h2>
       <div class="plan-box">
         <div id="planBox"></div>
         <div id="tip" class="tip"></div>
@@ -310,7 +310,7 @@
 <!-- ROBOT 1 CONTROL -->
 <div class="page" id="pageR1">
   <div class="rpage-wrap">
-    <button class="hbtn" style="align-self:flex-start" onclick="showView('main')">&larr; Back to Floor Plan</button>
+    <button class="hbtn" style="align-self:flex-start" onclick="showView('main')">&larr; Back to Live Command Hub</button>
     <div class="card">
       <h2><span style="color:#5aa0ff">Robot 1</span> - Control Page</h2>
       <div class="sel-summary bigloc">
@@ -330,7 +330,7 @@
 <!-- ROBOT 2 CONTROL -->
 <div class="page" id="pageR2">
   <div class="rpage-wrap">
-    <button class="hbtn" style="align-self:flex-start" onclick="showView('main')">&larr; Back to Floor Plan</button>
+    <button class="hbtn" style="align-self:flex-start" onclick="showView('main')">&larr; Back to Live Command Hub</button>
     <div class="card">
       <h2><span style="color:#00c2a8">Robot 2</span> - Control Page</h2>
       <div class="sel-summary bigloc">
@@ -1224,7 +1224,7 @@ function renderRobotPage(n){
   if(RESET[n].active){ note.innerHTML='<b>Safety Reset:</b> '+resetPhaseText(n)+'. Robot remains locked until the human device check is confirmed.'; return; }
   if(autoIsActive(n)){ note.innerHTML='<b>Auto Mode:</b> '+autoPhaseText(n)+'. Manual commands are locked until Auto stops safely at Prepare.'; return; }
   if(state.busyR[n]){ note.innerHTML='Robot '+n+' is moving... watch the running line on the map.'; return; }
-  if(loc==='prepare'){ note.innerHTML='Robot '+n+' is at Prepare and <b>available</b> on the main Floor Plan dashboard. No transport command needed here.'; }
+  if(loc==='prepare'){ note.innerHTML='Robot '+n+' is at Prepare and <b>available</b> on the main Live Command Hub. No transport command needed here.'; }
   else if(loc==='station'){
     cmds.innerHTML='<button class="btn btn-amber" onclick="robotCmd('+n+',\'storage\')">&#128230; Move device to Storage (pick slot)</button>'
       +'<button class="btn btn-blue" onclick="robotCmd('+n+',\'prepare\')">&#8617; Return robot to Prepare (blue line)</button>';
