@@ -128,6 +128,22 @@
   .runline{stroke-dasharray:9 7;stroke-opacity:.85;animation:march 2.6s linear infinite}
 
   .rpage-wrap{max-width:1040px;margin:18px auto;padding:0 16px;display:flex;flex-direction:column;gap:16px}
+  .spectator-wrap{max-width:1500px;margin:18px auto;padding:0 16px;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px}
+  .spectator-plan{min-height:calc(100vh - 112px)}
+  .spectator-side{display:flex;flex-direction:column;gap:16px}
+  .watch-banner{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;background:linear-gradient(180deg,#f1f6ff,#e9f0ff);border:1px solid #b9c9f4;color:var(--accent);font-size:12px;font-weight:700}
+  .watch-banner i{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 5px rgba(18,183,106,.14);animation:freepulse 1.4s ease-in-out infinite}
+  .watch-robots{display:flex;flex-direction:column;gap:9px}
+  .watch-robot{background:var(--panel2);border:1px solid var(--line2);border-radius:12px;padding:11px 12px}
+  .watch-robot-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;font-weight:800}
+  .watch-robot-head span:last-child{font-size:10px;color:var(--mut);font-weight:600}
+  .watch-robot-status{font-size:11px;color:var(--mut);line-height:1.45}
+  .watch-stations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .watch-station{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:8px 9px;font-size:10px;color:var(--mut)}
+  .watch-station b{display:block;color:var(--txt);font-size:11px;margin-bottom:3px}
+  .watch-station.full{background:#fdeef1;border-color:#edb6c1;color:#d0566b}
+  body.theme-night .watch-banner{background:#16294a;border-color:#2c4f88;color:#7fa8ff}
+  body.theme-night .watch-station.full{background:#3a2630;border-color:#5a3542;color:#ff9aa6}
   .bigloc{font-size:15px}
   .cmds .btn{margin-top:10px}
   .locpill{display:inline-block;border-radius:20px;padding:4px 13px;font-size:12px;font-weight:700}
@@ -192,6 +208,8 @@
   /* ================= RESPONSIVE (iPad / phone) ================= */
   @media(max-width:1050px){
     .wrap{grid-template-columns:1fr;height:auto}
+    .spectator-wrap{grid-template-columns:1fr;margin:12px auto;padding:0 10px}
+    .spectator-plan{min-height:auto}
     .plan-card{min-height:auto!important}
     .plan-box{flex:none;width:100%;aspect-ratio:1030 / 490}
     .log{height:min(50vh,380px)}
@@ -238,6 +256,7 @@
     <button class="hbtn" id="themeBtn" onclick="toggleTheme()">🌙 Night mode</button>
     <button class="hbtn" id="fullscreenBtn" onclick="toggleFullscreen()" aria-pressed="false" title="Enter full screen">&#9974; Full Screen</button>
     <button class="hbtn on" id="nav-main" onclick="showView('main')">&#128225; Live Command Hub</button>
+    <button class="hbtn" id="nav-spectator" onclick="showView('spectator')">&#128065; Overall Spectator</button>
     <button class="hbtn" id="nav-r1" onclick="showView('r1')">&#129302; Robot 1 Control <span class="loc" id="nav-r1-loc">(Prepare)</span></button>
     <button class="hbtn" id="nav-r2" onclick="showView('r2')">&#129302; Robot 2 Control <span class="loc" id="nav-r2-loc">(Prepare)</span></button>
     <button class="hbtn" onclick="openLog()">&#128220; Log <span class="badge" id="logCount">0</span></button>
@@ -314,6 +333,47 @@
   </div>
 </div>
 </div>
+<div class="page" id="pageSpectator">
+  <div class="spectator-wrap">
+    <div class="card plan-card spectator-plan">
+      <h2>Overall Spectator &middot; Live Robot and Station Overview</h2>
+      <div class="plan-box">
+        <div id="planBoxSpectator"></div>
+        <div id="tipSpectator" class="tip"></div>
+      </div>
+      <div class="legend">
+        <span><i class="lg-dot" style="background:var(--green)"></i>Prepare station</span>
+        <span><i class="lg-dot" style="background:#5aa0ff"></i>Test station (hover / double-click / double-tap for slots)</span>
+        <span><i class="lg-dot" style="background:var(--red)"></i>Full station</span>
+        <span><i class="lg-dot" style="background:#d9a94a"></i>Storage</span>
+        <span><i class="lg-line" style="border-color:#0e9d8f"></i>Live robot route</span>
+      </div>
+    </div>
+    <div class="spectator-side">
+      <button class="hbtn" style="align-self:flex-start" onclick="showView('main')">&larr; Back to Live Command Hub</button>
+      <div class="watch-banner"><i></i>READ-ONLY LIVE MONITOR</div>
+      <div class="card">
+        <h2>Robot Status</h2>
+        <div class="watch-robots">
+          <div class="watch-robot">
+            <div class="watch-robot-head"><span class="r1n" style="color:#3a76e6">Robot 1</span><span id="watchRobotMode1">Ready</span></div>
+            <div class="watch-robot-status"><b id="watchRobotLoc1">Prepare</b><br><span id="watchRobotStatus1">Idle - at Prepare</span></div>
+          </div>
+          <div class="watch-robot">
+            <div class="watch-robot-head"><span class="r2n" style="color:#0e9d8f">Robot 2</span><span id="watchRobotMode2">Ready</span></div>
+            <div class="watch-robot-status"><b id="watchRobotLoc2">Prepare</b><br><span id="watchRobotStatus2">Idle - at Prepare</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Test Station Capacity</h2>
+        <div class="watch-stations" id="watchStations"></div>
+        <div class="muted" style="margin-top:9px">This page is for monitoring only. Robot commands remain on the Live Command Hub and Robot Control pages.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ROBOT 1 CONTROL -->
 <div class="page" id="pageR1">
   <div class="rpage-wrap">
@@ -580,13 +640,18 @@ occupied[2]=new Set();for(var i=0;i<15;i++)occupied[2].add(i);   // almost full:
 occupied[6]=new Set();for(var i=0;i<14;i++)occupied[6].add(i);   // almost full: 2 free
 
 /* ---------- views ---------- */
-function planContainerId(){ return state.activeView==='main'?'planBox':(state.activeView==='r1'?'planBoxR1':'planBoxR2'); }
+function planContainerId(){
+  if(state.activeView==='main') return 'planBox';
+  if(state.activeView==='spectator') return 'planBoxSpectator';
+  return state.activeView==='r1'?'planBoxR1':'planBoxR2';
+}
 function showView(v){
   closePinnedSpectator();
   state.activeView=v;
-  ['pageMain','pageR1','pageR2'].forEach(function(id){document.getElementById(id).classList.remove('active');});
-  ['nav-main','nav-r1','nav-r2'].forEach(function(id){document.getElementById(id).classList.remove('on');});
+  ['pageMain','pageSpectator','pageR1','pageR2'].forEach(function(id){document.getElementById(id).classList.remove('active');});
+  ['nav-main','nav-spectator','nav-r1','nav-r2'].forEach(function(id){document.getElementById(id).classList.remove('on');});
   if(v==='main'){document.getElementById('pageMain').classList.add('active');document.getElementById('nav-main').classList.add('on');}
+  else if(v==='spectator'){document.getElementById('pageSpectator').classList.add('active');document.getElementById('nav-spectator').classList.add('on');renderSpectatorSummary();}
   else{var n=v==='r1'?1:2;document.getElementById('page'+v.toUpperCase()).classList.add('active');document.getElementById('nav-'+v).classList.add('on');renderRobotPage(n);}
   drawPlan();
 }
@@ -597,6 +662,26 @@ function refreshNav(){
     var need=((state.rloc[n]==='station')||(state.rloc[n]==='storage'))&&!state.busyR[n];
     var b=document.getElementById('nav-r'+n); if(b)b.classList.toggle('awaitcmd',need);
   });
+}
+function renderSpectatorSummary(){
+  [1,2].forEach(function(n){
+    var loc=document.getElementById('watchRobotLoc'+n), status=document.getElementById('watchRobotStatus'+n), mode=document.getElementById('watchRobotMode'+n);
+    if(loc) loc.textContent=locLabel(n);
+    if(status) status.textContent=robotStatus[n]||'Status unavailable';
+    if(mode){
+      var txt=RESET[n].active?'Safety reset':(state.mov[n]?'Moving':(AUTO[n].stopRequested?'Auto stopping':(AUTO[n].enabled?'Auto mode':(state.busyR[n]?'Working':'Ready'))));
+      mode.textContent=txt;
+    }
+  });
+  var stations=document.getElementById('watchStations');
+  if(stations){
+    var html='';
+    for(var i=1;i<=N_TEST;i++){
+      var used=occupied[i].size, free=16-used;
+      html+='<div class="watch-station'+(free===0?' full':'')+'"><b>Station '+i+'</b>'+(free===0?'FULL':(free+' free'))+' &middot; '+used+' occupied</div>';
+    }
+    stations.innerHTML=html;
+  }
 }
 
 /* ---------- guide ---------- */
@@ -649,6 +734,11 @@ function setRobotStatus(n,txt){ robotStatus[n]=txt; var e=document.getElementByI
 function pickRobotPrompt(){ if(state.stage==='robot' && availRobots().length>0){ flashGuide('Select an available robot inside the Prepare box.'); } }
 function stationClick(i,evt){
   if(Date.now()<SUPPRESS_STATION_CLICK_UNTIL) return;
+  if(state.activeView==='spectator'){
+    if(PINNED_SPECTATOR_STATION!==null){LAST_PINNED_CLOSE_AT=Date.now();PINNED_SPECTATOR_STATION=null;}
+    SUPPRESS_HOVER_STATION=i;hideTip(true);
+    return;
+  }
   if(state.stage!=='station'){
     if(state.activeView==='main'&&evt&&evt.clientX!=null){
       if(PINNED_SPECTATOR_STATION!==null){LAST_PINNED_CLOSE_AT=Date.now();PINNED_SPECTATOR_STATION=null;}
@@ -667,7 +757,8 @@ function stationClick(i,evt){
 }
 function stationDoubleClick(i,evt){
   if(Date.now()<SUPPRESS_STATION_CLICK_UNTIL||Date.now()-LAST_PINNED_CLOSE_AT<550) return;
-  if(state.activeView!=='main'||state.stage==='station') return;
+  if(state.activeView!=='main'&&state.activeView!=='spectator') return;
+  if(state.activeView==='main'&&state.stage==='station') return;
   PINNED_SPECTATOR_STATION=i;SUPPRESS_HOVER_STATION=null;showTip(evt,i);
   if(evt&&evt.preventDefault)evt.preventDefault();
 }
@@ -687,8 +778,8 @@ function positionTipInViewport(tip,clientX,clientY){
   tip.style.left=Math.round(lx)+'px'; tip.style.top=Math.round(ty)+'px';
 }
 function showTip(evt,i){
-  if(state.activeView!=='main')return;
-  var tip=document.getElementById('tip'); var occ=occupied[i].size, free=16-occ, full=occ>=16;
+  if(state.activeView!=='main'&&state.activeView!=='spectator')return;
+  var tip=document.getElementById(state.activeView==='spectator'?'tipSpectator':'tip'); var occ=occupied[i].size, free=16-occ, full=occ>=16;
   var cells='';
   for(var row=0;row<8;row++){
     for(var col=0;col<2;col++){
@@ -704,10 +795,10 @@ function showTip(evt,i){
 }
 function hideTip(force){
   if(PINNED_SPECTATOR_STATION!==null&&!force) return;
-  var tip=document.getElementById('tip');tip.style.display='none';tip.className='tip';TIP_ANCHOR=null;
+  ['tip','tipSpectator'].forEach(function(id){var tip=document.getElementById(id);if(tip){tip.style.display='none';tip.className='tip';}});TIP_ANCHOR=null;
 }
 function repositionVisibleTip(){
-  var tip=document.getElementById('tip');
+  var tip=document.getElementById(state.activeView==='spectator'?'tipSpectator':'tip');
   if(tip&&tip.style.display==='block'&&TIP_ANCHOR) positionTipInViewport(tip,TIP_ANCHOR.x,TIP_ANCHOR.y);
 }
 window.addEventListener('resize',function(){requestAnimationFrame(repositionVisibleTip);});
@@ -742,7 +833,7 @@ function stationTouchMove(evt,i){
 function stationTouchEnd(evt,i){
   if(TOUCH_STATION!==i){clearStationTouch();return;}
   var t=evt.changedTouches&&evt.changedTouches[0], point=t?{x:t.clientX,y:t.clientY}:TOUCH_POINT;
-  var toggle=!TOUCH_MOVED&&point&&state.activeView==='main'&&state.stage!=='station';
+  var toggle=!TOUCH_MOVED&&point&&((state.activeView==='main'&&state.stage!=='station')||state.activeView==='spectator');
   clearStationTouch();
   if(!toggle){LAST_TOUCH_TAP_STATION=null;LAST_TOUCH_TAP_AT=0;return;}
   SUPPRESS_STATION_CLICK_UNTIL=Date.now()+900;
@@ -1359,7 +1450,8 @@ function drawPlan(){
   var bots=tstn(5,40,262,110,84)+tstn(6,40,352,110,84)+tstn(7,160,307,110,84);
 
   var prepBlink=(state.activeView==='main' && state.stage==='robot' && availRobots().length>0)?' class="blk-prep"':'';
-  var star='<g style="cursor:pointer" onclick="pickRobotPrompt()">'
+  var spectatorOnly=state.activeView==='spectator';
+  var star='<g'+(spectatorOnly?'':' style="cursor:pointer" onclick="pickRobotPrompt()"')+'>'
     +'<circle'+prepBlink+' cx="'+sx+'" cy="'+sy+'" r="16" fill="'+P.starFill+'" stroke="'+P.starStroke+'" stroke-width="2.5"/>'
     +'<path d="'+starPath(sx,sy,10)+'" fill="'+P.starStroke+'"/>'
     +'<text x="'+sx+'" y="'+(sy+30)+'" fill="'+P.prepLabel+'" font-size="11" font-weight="700" text-anchor="middle">'+PREP_NAME+'</text>'
@@ -1371,10 +1463,10 @@ function drawPlan(){
     var fill=active?P.rbActFill:(avail?P.rbAvFill:P.rbUnFill);var stroke=active?P.rbActStroke:(avail?P.rbAvStroke:P.rbUnStroke);
     var txt=active?P.rbActText:(avail?P.rbAvText:P.rbUnText);
     var click=avail?('pickRobot('+n+')'):("flashGuide('Robot "+n+" is away - use its Control page.')");
-    return '<g style="cursor:pointer" onclick="'+click+'"><rect'+blink+' x="790" y="'+y+'" width="120" height="34" rx="9" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(active?2.5:1.2)+'"/>'
+    return '<g'+(spectatorOnly?'':' style="cursor:pointer" onclick="'+click+'"')+'><rect'+blink+' x="790" y="'+y+'" width="120" height="34" rx="9" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(active?2.5:1.2)+'"/>'
       +'<text x="850" y="'+(y+22)+'" fill="'+txt+'" font-size="11.5" font-weight="700" text-anchor="middle">'+label+'</text></g>';
   }
-  var selBtns='<text x="850" y="243" fill="'+P.selText+'" font-size="10" font-weight="700" text-anchor="middle">SELECT ROBOT (at Prepare only)</text>'+robotBtn(1,250)+robotBtn(2,292);
+  var selBtns='<text x="850" y="243" fill="'+P.selText+'" font-size="10" font-weight="700" text-anchor="middle">'+(spectatorOnly?'ROBOT STATUS':'SELECT ROBOT (at Prepare only)')+'</text>'+robotBtn(1,250)+robotBtn(2,292);
 
   var runline='', moving='';
   [1,2].forEach(function(n){
@@ -1417,9 +1509,10 @@ function drawPlan(){
     +robot(1,P.r1)+robot(2,P.r2)+moving
     +'</svg>';
   var act=planContainerId();
-  ['planBox','planBoxR1','planBoxR2'].forEach(function(id){ if(id!==act){ var e=document.getElementById(id); if(e && e.innerHTML!=='') e.innerHTML=''; } });
+  ['planBox','planBoxSpectator','planBoxR1','planBoxR2'].forEach(function(id){ if(id!==act){ var e=document.getElementById(id); if(e && e.innerHTML!=='') e.innerHTML=''; } });
   var c=document.getElementById(act); if(c)c.innerHTML=svg;
   refreshNav();
+  renderSpectatorSummary();
 }
 function starPath(cx,cy,r){var p='';for(var i=0;i<10;i++){var ang=Math.PI/5*i-Math.PI/2;var rr=i%2?r*0.45:r;
   p+=(i?'L':'M')+(cx+rr*Math.cos(ang)).toFixed(1)+','+(cy+rr*Math.sin(ang)).toFixed(1)+' ';}return p+'Z';}
