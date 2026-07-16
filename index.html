@@ -131,18 +131,10 @@
   .spectator-wrap{max-width:1500px;margin:18px auto;padding:0 16px;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px}
   .spectator-plan{min-height:calc(100vh - 112px)}
   .spectator-side{display:flex;flex-direction:column;gap:16px}
-  .watch-banner{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;background:linear-gradient(180deg,#f1f6ff,#e9f0ff);border:1px solid #b9c9f4;color:var(--accent);font-size:12px;font-weight:700}
-  .watch-banner i{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 5px rgba(18,183,106,.14);animation:freepulse 1.4s ease-in-out infinite}
-  .watch-robots{display:flex;flex-direction:column;gap:9px}
-  .watch-robot{background:var(--panel2);border:1px solid var(--line2);border-radius:12px;padding:11px 12px}
-  .watch-robot-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;font-weight:800}
-  .watch-robot-head span:last-child{font-size:10px;color:var(--mut);font-weight:600}
-  .watch-robot-status{font-size:11px;color:var(--mut);line-height:1.45}
   .watch-stations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   .watch-station{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:8px 9px;font-size:10px;color:var(--mut)}
   .watch-station b{display:block;color:var(--txt);font-size:11px;margin-bottom:3px}
   .watch-station.full{background:#fdeef1;border-color:#edb6c1;color:#d0566b}
-  body.theme-night .watch-banner{background:#16294a;border-color:#2c4f88;color:#7fa8ff}
   body.theme-night .watch-station.full{background:#3a2630;border-color:#5a3542;color:#ff9aa6}
   .bigloc{font-size:15px}
   .cmds .btn{margin-top:10px}
@@ -342,33 +334,16 @@
         <div id="tipSpectator" class="tip"></div>
       </div>
       <div class="legend">
-        <span><i class="lg-dot" style="background:var(--green)"></i>Prepare station</span>
         <span><i class="lg-dot" style="background:#5aa0ff"></i>Test station (hover / double-click / double-tap for slots)</span>
         <span><i class="lg-dot" style="background:var(--red)"></i>Full station</span>
-        <span><i class="lg-dot" style="background:#d9a94a"></i>Storage</span>
-        <span><i class="lg-line" style="border-color:#0e9d8f"></i>Live robot route</span>
       </div>
     </div>
     <div class="spectator-side">
       <button class="hbtn" style="align-self:flex-start" onclick="showView('main')">&larr; Back to Live Command Hub</button>
-      <div class="watch-banner"><i></i>READ-ONLY LIVE MONITOR</div>
-      <div class="card">
-        <h2>Robot Status</h2>
-        <div class="watch-robots">
-          <div class="watch-robot">
-            <div class="watch-robot-head"><span class="r1n" style="color:#3a76e6">Robot 1</span><span id="watchRobotMode1">Ready</span></div>
-            <div class="watch-robot-status"><b id="watchRobotLoc1">Prepare</b><br><span id="watchRobotStatus1">Idle - at Prepare</span></div>
-          </div>
-          <div class="watch-robot">
-            <div class="watch-robot-head"><span class="r2n" style="color:#0e9d8f">Robot 2</span><span id="watchRobotMode2">Ready</span></div>
-            <div class="watch-robot-status"><b id="watchRobotLoc2">Prepare</b><br><span id="watchRobotStatus2">Idle - at Prepare</span></div>
-          </div>
-        </div>
-      </div>
       <div class="card">
         <h2>Test Station Capacity</h2>
         <div class="watch-stations" id="watchStations"></div>
-        <div class="muted" style="margin-top:9px">This page is for monitoring only. Robot commands remain on the Live Command Hub and Robot Control pages.</div>
+        <div class="muted" style="margin-top:9px">Station-only monitoring. Hover for a quick slot preview, or double-click / double-tap to keep the slot layout open.</div>
       </div>
     </div>
   </div>
@@ -664,15 +639,6 @@ function refreshNav(){
   });
 }
 function renderSpectatorSummary(){
-  [1,2].forEach(function(n){
-    var loc=document.getElementById('watchRobotLoc'+n), status=document.getElementById('watchRobotStatus'+n), mode=document.getElementById('watchRobotMode'+n);
-    if(loc) loc.textContent=locLabel(n);
-    if(status) status.textContent=robotStatus[n]||'Status unavailable';
-    if(mode){
-      var txt=RESET[n].active?'Safety reset':(state.mov[n]?'Moving':(AUTO[n].stopRequested?'Auto stopping':(AUTO[n].enabled?'Auto mode':(state.busyR[n]?'Working':'Ready'))));
-      mode.textContent=txt;
-    }
-  });
   var stations=document.getElementById('watchStations');
   if(stations){
     var html='';
@@ -1430,10 +1396,11 @@ function robotCmd(n,target){
 /* ---------- floor plan (renders into active view) ---------- */
 function drawPlan(){
   var P=(THEME==='night')?PAL.night:PAL.light;
+  var spectatorOnly=state.activeView==='spectator';
   var sx=STAR[0],sy=STAR[1];
   function tstn(i,x,y,w,h){
     var full=occupied[i].size>=16, sel=state.dest===i;
-    var resBy=(state.target[1]===i)?1:((state.target[2]===i)?2:0);
+    var resBy=spectatorOnly?0:((state.target[1]===i)?1:((state.target[2]===i)?2:0));
     var cls=(state.activeView==='main' && state.stage==='station' && !full && !sel && !resBy)?' class="blk-stn"':'';
     var fill=sel?P.stnSel:(full?P.stnFull:P.stnFill);
     var stroke=sel?P.stnSelStroke:(resBy?(resBy===1?P.r1:P.r2):(full?P.stnFullStroke:P.stnStroke));
@@ -1446,11 +1413,22 @@ function drawPlan(){
       +'<text x="'+(x+w/2)+'" y="'+(y+h/2-4)+'" fill="'+P.stnTitle+'" font-size="13" font-weight="700" text-anchor="middle">Station '+i+'</text>'
       +'<text'+subCls+' x="'+(x+w/2)+'" y="'+(y+h/2+13)+'" fill="'+subFill+'" font-size="10" font-weight="'+(subCls?'700':'400')+'" text-anchor="middle">'+subTxt+'</text></g>';
   }
+  if(spectatorOnly){
+    var stationSvg='<svg viewBox="0 0 780 510" preserveAspectRatio="xMidYMid meet">'
+      +'<rect x="8" y="8" width="764" height="494" rx="16" fill="none" stroke="'+P.border+'" stroke-width="1.5"/>'
+      +'<text x="390" y="30" fill="'+P.stnHdr+'" font-size="14" font-weight="700" text-anchor="middle">LIVE TEST STATIONS</text>'
+      +tstn(1,35,48,220,112)+tstn(2,280,48,220,112)+tstn(3,525,48,220,112)
+      +tstn(4,35,188,220,112)+tstn(5,280,188,220,112)+tstn(6,525,188,220,112)
+      +tstn(7,280,328,220,132)
+      +'</svg>';
+    ['planBox','planBoxR1','planBoxR2'].forEach(function(id){var e=document.getElementById(id);if(e&&e.innerHTML!=='')e.innerHTML='';});
+    var spectatorPlan=document.getElementById('planBoxSpectator');if(spectatorPlan)spectatorPlan.innerHTML=stationSvg;
+    refreshNav();renderSpectatorSummary();return;
+  }
   var tops=tstn(1,40,45,110,72)+tstn(2,160,45,110,72)+tstn(3,40,128,110,72)+tstn(4,160,128,110,72);
   var bots=tstn(5,40,262,110,84)+tstn(6,40,352,110,84)+tstn(7,160,307,110,84);
 
   var prepBlink=(state.activeView==='main' && state.stage==='robot' && availRobots().length>0)?' class="blk-prep"':'';
-  var spectatorOnly=state.activeView==='spectator';
   var star='<g'+(spectatorOnly?'':' style="cursor:pointer" onclick="pickRobotPrompt()"')+'>'
     +'<circle'+prepBlink+' cx="'+sx+'" cy="'+sy+'" r="16" fill="'+P.starFill+'" stroke="'+P.starStroke+'" stroke-width="2.5"/>'
     +'<path d="'+starPath(sx,sy,10)+'" fill="'+P.starStroke+'"/>'
